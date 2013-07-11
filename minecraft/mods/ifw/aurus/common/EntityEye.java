@@ -427,11 +427,11 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 		}
 	}
 
-	// Eyedas spawn near torches or in complete darkness.
+	// Eyedas spawn near torches or in darkness.
 	@Override
 	public boolean getCanSpawnHere() {
 		return super.getCanSpawnHere()
-				&& (/* this.isValidLightLevel() || */isTorchNearby());
+				&& (this.isValidLightLevel() || isTorchNearby());
 	}
 
 	public boolean isTorchNearby() {

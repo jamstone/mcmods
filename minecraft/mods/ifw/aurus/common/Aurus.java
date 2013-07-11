@@ -256,7 +256,7 @@ public class Aurus implements ITickHandler {
 				"en_US", "Eyedas");
 		EntityRegistry.registerGlobalEntityID(EntityEye.class, "eyedas",
 				EntityRegistry.findGlobalUniqueEntityId(), 0x333333, 0x3366CC);
-		EntityRegistry.addSpawn(EntityEye.class, 10, 1, 2,
+		EntityRegistry.addSpawn(EntityEye.class, 1, 1, 2,
 				EnumCreatureType.monster, BiomeGenBase.beach,
 				BiomeGenBase.desert, BiomeGenBase.desertHills,
 				BiomeGenBase.extremeHills, BiomeGenBase.extremeHillsEdge,
