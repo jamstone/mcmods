@@ -216,13 +216,19 @@ public class Aurus implements ITickHandler {
 				"en_US", "Auru");
 		EntityRegistry.registerGlobalEntityID(EntityAuru.class, "auru",
 				EntityRegistry.findGlobalUniqueEntityId(), 0x999999, 0x666666);
-		EntityRegistry.addSpawn(EntityAuru.class, 2, 1, 1,
+		EntityRegistry.addSpawn(EntityAuru.class, 1, 1, 1,
 				EnumCreatureType.creature, BiomeGenBase.beach,
-				BiomeGenBase.extremeHills, BiomeGenBase.extremeHillsEdge,
 				BiomeGenBase.desert, BiomeGenBase.desertHills,
-				BiomeGenBase.ocean, BiomeGenBase.plains,
-				BiomeGenBase.icePlains, BiomeGenBase.iceMountains,
-				BiomeGenBase.river, BiomeGenBase.swampland);
+				BiomeGenBase.extremeHills, BiomeGenBase.extremeHillsEdge,
+				BiomeGenBase.forest, BiomeGenBase.forestHills,
+				BiomeGenBase.frozenOcean, BiomeGenBase.frozenRiver,
+				/* BiomeGenBase.hell, */BiomeGenBase.iceMountains,
+				BiomeGenBase.icePlains, BiomeGenBase.jungle,
+				BiomeGenBase.jungleHills, BiomeGenBase.mushroomIsland,
+				BiomeGenBase.mushroomIslandShore, BiomeGenBase.ocean,
+				BiomeGenBase.plains, BiomeGenBase.river, BiomeGenBase.sky,
+				BiomeGenBase.swampland, BiomeGenBase.taiga,
+				BiomeGenBase.taigaHills);
 
 		LanguageRegistry.instance().addStringLocalization(
 				"entity.auruBog.name", "en_US", "Bog Auru");
@@ -246,10 +252,23 @@ public class Aurus implements ITickHandler {
 		EntityRegistry.registerGlobalEntityID(EntityAuruIce.class, "auruIce",
 				EntityRegistry.findGlobalUniqueEntityId(), 0x66CCFF, 0xFFFFFF);
 
-		LanguageRegistry.instance().addStringLocalization("entity.eye.name",
-				"en_US", "Eye");
-		EntityRegistry.registerGlobalEntityID(EntityEye.class, "eye",
+		LanguageRegistry.instance().addStringLocalization("entity.eyedas.name",
+				"en_US", "Eyedas");
+		EntityRegistry.registerGlobalEntityID(EntityEye.class, "eyedas",
 				EntityRegistry.findGlobalUniqueEntityId(), 0x333333, 0x3366CC);
+		EntityRegistry.addSpawn(EntityEye.class, 1, 1, 2,
+				EnumCreatureType.monster, BiomeGenBase.beach,
+				BiomeGenBase.desert, BiomeGenBase.desertHills,
+				BiomeGenBase.extremeHills, BiomeGenBase.extremeHillsEdge,
+				BiomeGenBase.forest, BiomeGenBase.forestHills,
+				BiomeGenBase.frozenOcean, BiomeGenBase.frozenRiver,
+				/* BiomeGenBase.hell, */BiomeGenBase.iceMountains,
+				BiomeGenBase.icePlains, BiomeGenBase.jungle,
+				BiomeGenBase.jungleHills, BiomeGenBase.mushroomIsland,
+				BiomeGenBase.mushroomIslandShore, BiomeGenBase.ocean,
+				BiomeGenBase.plains, BiomeGenBase.river, BiomeGenBase.sky,
+				BiomeGenBase.swampland, BiomeGenBase.taiga,
+				BiomeGenBase.taigaHills);
 	}
 
 	public void registerEtc() {

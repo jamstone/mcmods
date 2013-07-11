@@ -76,7 +76,7 @@ public class BlockPathMarker extends Block {
 
 	public void onBlockAdded(World par1World, int par2, int par3, int par4) {
 		par1World.scheduleBlockUpdate(par2, par3, par4, this.blockID,
-				par1World.rand.nextInt(25) + 50);
+				par1World.rand.nextInt(50) + 75);
 	}
 
 	@Override
@@ -125,7 +125,7 @@ public class BlockPathMarker extends Block {
 
 			Direction dir = neighbours.get(i);
 
-			for (int j = 0; j < 1; j++) {
+			for (int j = 0; j < 2; j++) {
 
 				float randomFloat = par5Random.nextFloat();
 
@@ -137,8 +137,8 @@ public class BlockPathMarker extends Block {
 						+ (par5Random.nextFloat() - 0.5D) * 0.1;
 
 				double var13 = -10.0D;
-				double var15 = 2.0D;
-				double var17 = 1.0D;
+				double var15 = 2.0D * j;
+				double var17 = 1.0D * j;
 
 				world.spawnParticle("reddust", x, y, z, var13, var15, var17);
 			}

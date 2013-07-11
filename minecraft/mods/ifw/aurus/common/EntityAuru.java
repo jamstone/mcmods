@@ -30,7 +30,6 @@ import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 
-
 public class EntityAuru extends EntityLiving implements IMob,
 		IAStarPathedEntity {
 	// Fields
@@ -176,6 +175,7 @@ public class EntityAuru extends EntityLiving implements IMob,
 
 	public EntityAuru(World par1World) {
 		super(par1World);
+
 		this.texture = "/mods/ifw_aurus/textures/models/Auru.png";
 		this.experienceValue = 15;
 		this.isImmuneToFire = true;

@@ -103,7 +103,7 @@ public class AStarWorkerJPS3D extends AStarWorker {
 				}
 			}
 			if (openColumn) {
-				start = new AStarNode(end.x, y, z, start, end);
+				start = new AStarNode(end.x, y, z, startNode, end);
 				plane = Direction.UN;
 			}
 		}
@@ -121,7 +121,7 @@ public class AStarWorkerJPS3D extends AStarWorker {
 				}
 			}
 			if (openColumn) {
-				start = new AStarNode(x, y, end.z, start, end);
+				start = new AStarNode(x, y, end.z, startNode, end);
 				plane = Direction.UE;
 			}
 		}
@@ -140,7 +140,7 @@ public class AStarWorkerJPS3D extends AStarWorker {
 				}
 			}
 			if (openColumn) {
-				start = new AStarNode(x, end.y, z, null, end);
+				start = new AStarNode(x, end.y, z, startNode, end);
 				plane = Direction.NE;
 			}
 		}
@@ -196,7 +196,7 @@ public class AStarWorkerJPS3D extends AStarWorker {
 				// we found the target! OH, MY!
 				System.out.println("Checked " + checks);
 
-				return backTrace(start);
+				return backTrace(startNode);
 			}
 		}
 
@@ -243,7 +243,7 @@ public class AStarWorkerJPS3D extends AStarWorker {
 					// we found the target! OH, MY!
 					System.out.println("Checked " + checks);
 
-					return backTrace(start);
+					return backTrace(startNode);
 				}
 			}
 		}
@@ -295,6 +295,8 @@ public class AStarWorkerJPS3D extends AStarWorker {
 				break;
 			case D3:
 				neighboursD3.add(dir);
+				break;
+			default:
 				break;
 			}
 		}
@@ -406,6 +408,8 @@ public class AStarWorkerJPS3D extends AStarWorker {
 				break;
 			case D3:
 				neighboursD3.add(dir);
+				break;
+			default:
 				break;
 			}
 		}

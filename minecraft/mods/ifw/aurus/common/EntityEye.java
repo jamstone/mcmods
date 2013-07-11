@@ -13,6 +13,7 @@ import net.minecraft.entity.EntityFlying;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.monster.IMob;
+import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -21,6 +22,7 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Tuple;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 
@@ -67,7 +69,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 		this.texture = "/mods/ifw_aurus/textures/models/Eye.png";
 
 		this.isImmuneToFire = true;
-		this.experienceValue = 5;
+		this.experienceValue = 1;
 
 		this.setSize(0.5f, 0.5f); // size determines vanishing point of
 									// renders
@@ -77,6 +79,8 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 	@Override
 	public boolean attackEntityFrom(DamageSource par1DamageSource, int par2) {
+		dropStolenItem();
+		
 		return super.attackEntityFrom(par1DamageSource, par2);
 	}
 
@@ -142,7 +146,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 	@Override
 	public int getMaxHealth() {
-		return 10;
+		return 1;
 	}
 
 	public int getAttackStrength(Entity par1Entity) {
@@ -175,9 +179,6 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 		if (path != null) {
 			// if I have successfully found a path to a hiding spot and I don't
 			// have a fetchStack, get one from the player.
-			if (hidingSpot != null && fetchStack == null) {
-
-			}
 			if (!pathProcessed) {
 				pathProcessed = true;
 				processPath();
@@ -211,9 +212,19 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 				this.waypointY = (this.targetedEntity.posY + 3.0D);
 				this.waypointZ = (this.posZ - 4.0D * (this.targetedEntity.posZ - this.posZ));
 			} else {
-				if (worldObj.rand.nextInt(100) == 0) {
+				if (targetedEntity != null
+						&& ((EntityPlayer) targetedEntity)
+								.getCurrentEquippedItem() != null
+						&& worldObj.rand.nextInt(50000) < this
+								.valueOfItem(((EntityPlayer) targetedEntity)
+										.getCurrentEquippedItem().itemID)) {
 					kleptomania = true;
 				}
+			}
+
+			if (targetedEntity == null
+					|| ((EntityPlayer) targetedEntity).getCurrentEquippedItem() == null) {
+				kleptomania = false;
 			}
 
 			if (this.courseChangeCooldown-- <= 0) {
@@ -235,7 +246,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 			if ((this.targetedEntity == null) || (this.aggroCooldown-- <= 0)) {
 				this.targetedEntity = this.worldObj
-						.getClosestVulnerablePlayerToEntity(this, 100.0D);
+						.getClosestVulnerablePlayerToEntity(this, 40.0D);
 
 				if (this.targetedEntity != null) {
 					this.aggroCooldown = 20;
@@ -345,17 +356,17 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 	@Override
 	protected String getLivingSound() {
-		return "";
+		return "fire.ignite";
 	}
 
 	@Override
 	protected String getHurtSound() {
-		return "mob.ghast.scream";
+		return "step.stone";
 	}
 
 	@Override
 	protected String getDeathSound() {
-		return "mob.ghast.death";
+		return "random.break";
 	}
 
 	@Override
@@ -373,13 +384,18 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 	}
 
 	@Override
+	protected float getSoundPitch() {
+		return 2 + 1.0f*this.rand.nextFloat();
+	}
+
+	@Override
 	public boolean getCanSpawnHere() {
 		return super.getCanSpawnHere();
 	}
 
 	@Override
 	public int getMaxSpawnedInChunk() {
-		return 10;
+		return 2;
 	}
 
 	public boolean interact(EntityPlayer player) {
@@ -477,11 +493,11 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 		while (attempts > 0 && !found) {
 			attempts--;
 			x = xStart + (worldObj.rand.nextInt(2) - 1)
-					* (minRange + maxRange - minRange);
-			y = yStart + (worldObj.rand.nextInt(2 * 4) - 4);
+					* worldObj.rand.nextInt(minRange + maxRange - minRange);
+			y = yStart + (worldObj.rand.nextInt(2 * 6) - 6);
 			// y = yStart + (worldObj.rand.nextInt(2 * range) - range);
 			z = zStart + (worldObj.rand.nextInt(2) - 1)
-					* (minRange + maxRange - minRange);
+					* worldObj.rand.nextInt(minRange + maxRange - minRange);
 
 			aabb.offset(x - aabb.minX, y - aabb.minY, z - aabb.minZ);
 
@@ -525,7 +541,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 	private void breadCrumbs() {
 		// markPath = !markPath;
-		if (markPath && worldObj.rand.nextInt(2) == 0) {
+		if (markPath && worldObj.rand.nextInt(50) < path.size()) {
 			AStarNode step = path.get(path.size() - 1);
 			if (worldObj.isAirBlock(step.x, step.y, step.z))
 				worldObj.setBlock(step.x, step.y, step.z,
@@ -533,7 +549,6 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 			else if (worldObj.isAirBlock(step.x, step.y + 1, step.z))
 				worldObj.setBlock(step.x, step.y + 1, step.z,
 						Aurus.pathMarker.blockID);
-
 		}
 	}
 
@@ -573,9 +588,9 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 			if (d1sq > 0.50D) {
 				double d1 = MathHelper.sqrt_double(d1sq);
-				this.motionX += dX1 / d1 * (d1sq + 4) / 100; // 0.04D;
-				this.motionY += dY1 / d1 * (d1sq + 4) / 100; // 0.04D;
-				this.motionZ += dZ1 / d1 * (d1sq + 4) / 100; // 0.04D;
+				this.motionX += dX1 / d1 * (d1 + 4) / 100; // 0.04D;
+				this.motionY += dY1 / d1 * (d1 + 4) / 100; // 0.04D;
+				this.motionZ += dZ1 / d1 * (d1 + 4) / 100; // 0.04D;
 			} else {
 
 				// pathMarking.
@@ -654,11 +669,48 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 	public void tryToSteal() {
 		if (hidingSpot != null) {
 			if (playerStack != null) {
+				attackEntityAsMob(player);
 				fetchStack = player.inventory.decrStackSize(
 						player.inventory.currentItem, 1);
 				kleptomania = false;
 			}
 		}
+	}
+
+	/**
+	 * 
+	 * Uses the EntityVillager's merchant info to determine the value of items
+	 * relative to 1000. Note that many items are not traded in this list,
+	 * including ironically the golden items that the Eyedas drop.
+	 * 
+	 * @param itemID
+	 * @return Returns a value that is 1000 / (The number of items traded per
+	 *         emerald). For example, rotten flesh is traded 64 per emerald, so
+	 *         its value is 1000/64. Written books are traded at a value of 1
+	 *         per emerald, so their value is 1000. An iron helmet is worth 6
+	 *         emeralds per weapon, so their value would be 6000. If an item is
+	 *         not listed on the merchant list, it gets a random value from 0 to
+	 *         1000.
+	 */
+
+	public int valueOfItem(int itemID) {
+		Tuple tuple = (Tuple) EntityVillager.villagerStockList.get(itemID);
+		if (tuple != null) {
+			int maxSellable = ((Integer) tuple.getSecond()).intValue();
+			return 1000 / maxSellable;
+		}
+		tuple = (Tuple) EntityVillager.blacksmithSellingList.get(itemID);
+		if (tuple != null) {
+			int maxSellable = ((Integer) tuple.getSecond()).intValue();
+			if (maxSellable > 0) {
+				return 500 * maxSellable;
+			} else {
+				maxSellable = -((Integer) tuple.getFirst()).intValue();
+				return 1000 / maxSellable;
+			}
+		}
+
+		return worldObj.rand.nextInt(200);
 	}
 
 	public void onEndOfPathReached() {
