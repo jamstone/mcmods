@@ -23,6 +23,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Tuple;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 
@@ -80,7 +81,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 	@Override
 	public boolean attackEntityFrom(DamageSource par1DamageSource, int par2) {
 		dropStolenItem();
-		
+
 		return super.attackEntityFrom(par1DamageSource, par2);
 	}
 
@@ -195,7 +196,11 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 			// approach, but keep at a distance unless trying to steal.
 			if (d1sq > 16.0D || kleptomania) {
 				double d1 = MathHelper.sqrt_double(d1sq);
-				if (isCourseTraversable(this.waypointX, this.waypointY,
+				if (isCourseTraversable(
+						// (this.boundingBox.minX + this.boundingBox.maxX) / 2,
+						// this.boundingBox.minY + 0.5f,
+						// (this.boundingBox.minZ + this.boundingBox.maxZ) / 2,
+						posX, posY, posZ, this.waypointX, this.waypointY,
 						this.waypointZ)) {
 					this.motionX += dX1 / d1 * 0.04D;
 					this.motionY += dY1 / d1 * 0.04D;
@@ -258,8 +263,8 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 		if (this.targetedEntity != null) {
 			if (kleptomania
-					&& this.boundingBox
-							.intersectsWith(targetedEntity.boundingBox)) {
+					&& this.boundingBox.expand(0.5, 0.5, 0.5).intersectsWith(
+							targetedEntity.boundingBox)) {
 				player = (EntityPlayer) targetedEntity;
 				findPathToHidingSpotFrom(player);
 			}
@@ -343,10 +348,21 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 		AABB.offset(xStart - this.boundingBox.minX, yStart
 				- this.boundingBox.minY, zStart - this.boundingBox.minZ);
 
-		for (int i = 0; i < distance; i++) {
+		for (int i = 1; i < distance; i++) {
 			AABB.offset(dX, dY, dZ);
 
 			if (!this.worldObj.getCollidingBoundingBoxes(this, AABB).isEmpty()) {
+				// for (Object object : this.worldObj.getCollidingBoundingBoxes(
+				// this, AABB)) {
+				// AxisAlignedBB box = (AxisAlignedBB) object;
+				// int id = worldObj.getBlockId((int) Math.floor(box.minX),
+				// (int) Math.floor(box.minY),
+				// (int) Math.floor(box.minZ));
+				// if (id != 0 && Block.blocksList[id] != null
+				// && Block.blocksList[id].blockMaterial.isSolid()) {
+				// return false;
+				// }
+				// }
 				return false;
 			}
 		}
@@ -385,12 +401,57 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 	@Override
 	protected float getSoundPitch() {
-		return 2 + 1.0f*this.rand.nextFloat();
+		return 2 + 1.0f * this.rand.nextFloat();
 	}
 
+	// stolen from EntityMob
+	protected boolean isValidLightLevel() {
+		int i = MathHelper.floor_double(this.posX);
+		int j = MathHelper.floor_double(this.boundingBox.minY);
+		int k = MathHelper.floor_double(this.posZ);
+
+		if (this.worldObj.getSavedLightValue(EnumSkyBlock.Sky, i, j, k) > this.rand
+				.nextInt(32)) {
+			return false;
+		} else {
+			int l = this.worldObj.getBlockLightValue(i, j, k);
+
+			if (this.worldObj.isThundering()) {
+				int i1 = this.worldObj.skylightSubtracted;
+				this.worldObj.skylightSubtracted = 10;
+				l = this.worldObj.getBlockLightValue(i, j, k);
+				this.worldObj.skylightSubtracted = i1;
+			}
+
+			return l <= this.rand.nextInt(8);
+		}
+	}
+
+	// Eyedas spawn near torches or in complete darkness.
 	@Override
 	public boolean getCanSpawnHere() {
-		return super.getCanSpawnHere();
+		return super.getCanSpawnHere()
+				&& (/* this.isValidLightLevel() || */isTorchNearby());
+	}
+
+	public boolean isTorchNearby() {
+		AxisAlignedBB aabb = this.boundingBox.copy().expand(2, 2, 2);
+		for (int i = (int) (Math.floor(aabb.minX)); i <= (int) (Math
+				.floor(aabb.maxX)); i++) {
+			for (int j = (int) (Math.floor(aabb.minY)); j <= (int) (Math
+					.floor(aabb.maxY)); j++) {
+				for (int k = (int) (Math.floor(aabb.minZ)); k <= (int) (Math
+						.floor(aabb.maxZ)); k++) {
+					if (worldObj.getBlockId(i, j, k) == Block.torchWood.blockID) {
+						System.out
+								.printf("Spawned Eydas near a torch at (%d, %d, %d).\n",
+										i, j, k);
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -484,20 +545,44 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 		AxisAlignedBB aabb = this.boundingBox.copy();
 		aabb = aabb.expand(1, 1, 1);
 
-		int attempts = 512;
+		// ensures hiding spots are not preferentially in any one direction
+		int attempts = 26 + worldObj.rand.nextInt(13);
 
 		boolean found = false;
 
-		double x, y, z;
+		double x, y, z, xOff, yOff, zOff;
+
+		float angle, radius;
 
 		while (attempts > 0 && !found) {
 			attempts--;
-			x = xStart + (worldObj.rand.nextInt(2) - 1)
-					* worldObj.rand.nextInt(minRange + maxRange - minRange);
-			y = yStart + (worldObj.rand.nextInt(2 * 6) - 6);
-			// y = yStart + (worldObj.rand.nextInt(2 * range) - range);
-			z = zStart + (worldObj.rand.nextInt(2) - 1)
-					* worldObj.rand.nextInt(minRange + maxRange - minRange);
+
+			// 2.39996 is the golden angle in radians. using it as the
+			// multiplier in this method ensures that randomish directions are
+			// chosen without missing any angles.
+			angle = 2.39996f * attempts;
+			radius = minRange
+					+ worldObj.rand.nextInt(2 * (maxRange - minRange))
+					- (maxRange - minRange);
+
+			xOff = radius * Math.cos(angle);
+			yOff = (worldObj.rand.nextInt(2 * 6) - 6);
+			zOff = radius * Math.sin(angle);
+
+			// xOff = worldObj.rand.nextInt(2 * (maxRange - minRange))
+			// - (maxRange - minRange);
+			// xOff += xOff > 0 ? minRange : -minRange;
+			// zOff = worldObj.rand.nextInt(2 * (maxRange - minRange))
+			// - (maxRange - minRange);
+			// zOff += zOff > 0 ? minRange : -minRange;
+
+			x = xStart + xOff;
+			y = yStart + yOff;
+			z = zStart + zOff;
+			// x = xStart + worldObj.rand.nextInt(2 * maxRange) - maxRange;//
+			// xOff;
+			// y = yStart + yOff;
+			// z = zStart + worldObj.rand.nextInt(2 * maxRange) - maxRange;
 
 			aabb.offset(x - aabb.minX, y - aabb.minY, z - aabb.minZ);
 
