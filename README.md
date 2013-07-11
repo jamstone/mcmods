@@ -1,4 +1,0 @@
-MCMods
-======
-
-Minecraft Mods
