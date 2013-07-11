@@ -1,0 +1,17 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Config Files #
+
+
+# Minecraft Folders #
+
+*/atomicstryker/*
+*/cpw/*
+*/ibxm/*
+*/net/*
+*/paulscode/*
