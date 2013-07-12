@@ -373,6 +373,8 @@ public class EntityAuru extends EntityLiving implements IMob,
 
 		// HANDLE MODE/MODEL SWITCHING
 
+		// TODO: At night, land and go to sleep.
+		
 		if (this.model == MODEL_FLYING) {
 			// flying creatures shouldn't fall asleep for any reason.
 			if (this.getStatus() == STATUS_SLEEPING) {

@@ -461,7 +461,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
 	public boolean interact(EntityPlayer player) {
 		if (!worldObj.isRemote) {
-			System.out.println("Oh god my eye.");
+			System.out.println("Not eyet.");
 
 			// int scalar = 4;
 			//
@@ -476,13 +476,21 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 			// z = (int) posZ + (worldObj.rand.nextInt(32) - 16) * scalar;
 			// }
 
-			// findPathToHidingSpotFrom(player);
+			findPathToHidingSpotFrom(player);
 
 			// findPathTo(x, y, z);
 		} else {
 			double var13 = -10.0D;
-			double var15 = 2.0D;
-			double var17 = 1.0D;
+			double var15 = 0D;
+			double var17 = 0D;
+
+			worldObj.spawnParticle("reddust", this.boundingBox.minX
+					+ this.width / 2, this.boundingBox.minY + this.height / 2,
+					this.boundingBox.minZ + this.width / 2, var13, var15, var17);
+
+			var13 = -10.0D;
+			var15 = 2.0D;
+			var17 = 1.0D;
 
 			worldObj.spawnParticle("reddust", this.boundingBox.minX
 					+ this.width / 2, this.boundingBox.minY + this.height / 2,
@@ -546,7 +554,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 		aabb = aabb.expand(1, 1, 1);
 
 		// ensures hiding spots are not preferentially in any one direction
-		int attempts = 26 + worldObj.rand.nextInt(13);
+		int attempts = 52 + worldObj.rand.nextInt(13);
 
 		boolean found = false;
 
