@@ -49,7 +49,7 @@ public class EntityAuru extends EntityLiving implements IMob,
 
     public static enum Mood {
         //
-        VICIOUS(new Phase[]{Phase.ATTACK_FOREVER}),
+        VICIOUS(new Phase[]{Phase.ATTACK_UNTIL_DAMAGE_TAKEN, Phase.ATTACK_ONCE_IMMEDIATELY}),
         //
         ANXIOUS(
                 new Phase[]{Phase.HIDE_2_SEC, Phase.SNEAK, Phase.ATTACK_ONCE}),
@@ -57,7 +57,7 @@ public class EntityAuru extends EntityLiving implements IMob,
         CAUTIOUS(new Phase[]{Phase.OBSERVE_UNTIL_PROVOKED,
                 Phase.ATTACK_UNTIL_HP_LOW, Phase.HIDE_UNTIL_FOUND}),
         //
-        COLD(new Phase[]{Phase.ATTACK_ONCE, Phase.ATTACK_ONCE,
+        COLD(new Phase[]{Phase.ATTACK_ONCE, Phase.ATTACK_ONCE, Phase.ATTACK_ONCE,
                 Phase.HIDE_5_SEC}),
         //
         GUERILLA(new Phase[]{Phase.ATTACK_ONCE,
@@ -861,7 +861,7 @@ public class EntityAuru extends EntityLiving implements IMob,
 
                 this.attackCounter = 50 + rand.nextInt(20);
 
-                if (until == 1)
+                if (until == 1 || until == 5)
                     this.nextStep();
             }
         }
@@ -971,12 +971,6 @@ public class EntityAuru extends EntityLiving implements IMob,
         }
     }
 
-    public void setWaypoint(double x, double y, double z) {
-        this.waypointX = x;
-        this.waypointY = y;
-        this.waypointZ = z;
-    }
-
     public void setTargetPoint(double x, double y, double z) {
         this.targetX = x;
         this.targetY = y;
@@ -992,103 +986,6 @@ public class EntityAuru extends EntityLiving implements IMob,
     protected void dropRareDrop(int par1) {
         // TODO Auto-generated method stub
         super.dropRareDrop(par1);
-    }
-
-    // attempts to find a random waypoint with traversability to x, y, z within
-    // range
-    protected void setRandomWaypointWithTraversability(double x, double y,
-                                                       double z, double range) {
-        double xTest, yTest, zTest;
-        int attempts = 0;
-
-        do {
-            xTest = (x + (this.rand.nextFloat() * 2F - 1F) * range);
-            yTest = (y + (this.rand.nextFloat()) * range / 4);
-            zTest = (z + (this.rand.nextFloat() * 2F - 1F) * range);
-        } while (attempts++ < 16
-                || !this.isCourseTraversable(xTest, yTest, zTest, x, y, z));
-
-        this.waypointX = xTest;
-        this.waypointY = yTest;
-        this.waypointZ = zTest;
-
-    }
-
-    // attempts to find a random waypoint with traversability to x, y, z within
-    // range
-    protected void setRandomTargetPointWithTraversability(double x, double y,
-                                                          double z, double range) {
-        double xTest, yTest, zTest;
-        int attempts = 0;
-
-        do {
-            xTest = (x + (this.rand.nextFloat() * 2F - 1F) * range);
-            yTest = (y + (this.rand.nextFloat() * 2F - 0.5F) * range / 4);
-            zTest = (z + (this.rand.nextFloat() * 2F - 1F) * range);
-        } while (attempts++ < 16
-                || !this.isCourseTraversable(xTest, yTest, zTest, x, y, z));
-
-        this.targetX = xTest;
-        this.targetY = yTest;
-        this.targetZ = zTest;
-
-    }
-
-    // attempts to find a random waypoint with NO traversability to x, y, z
-    // within range range. used for hiding.
-    protected void setRandomWaypointWithNoTraversability(double x, double y,
-                                                         double z, double range) {
-        double xTest, yTest, zTest;
-        int attempts = 0;
-
-        do {
-            xTest = (x + (this.rand.nextFloat() * 2F - 1F) * range);
-            yTest = (y + (this.rand.nextFloat() * 2F - 0.5F) * range / 4);
-            zTest = (z + (this.rand.nextFloat() * 2F - 1F) * range);
-        } while (attempts++ < 16
-                || this.isCourseTraversable(xTest, yTest, zTest, x, y, z));
-
-        this.waypointX = xTest;
-        this.waypointY = yTest;
-        this.waypointZ = zTest;
-
-    }
-
-    // attempts to find a random waypoint around destination(x, y, z) with NO
-    // traversability to x, y, z within range. used for hiding.
-    protected void setRandomWaypointWithNoTraversabilityBetween(double destX,
-                                                                double destY, double destZ, double fearX, double fearY,
-                                                                double fearZ, double range) {
-        double xTest, yTest, zTest;
-        int attempts = 0;
-
-        do {
-            xTest = (destX + (this.rand.nextFloat() * 2F - 1F) * range);
-            yTest = (destY + (this.rand.nextFloat() * 2F - 0.5F) * range / 4);
-            zTest = (destZ + (this.rand.nextFloat() * 2F - 1F) * range);
-        } while (attempts++ < 16
-                || this.isCourseTraversable(xTest, yTest, zTest, fearX, fearY,
-                fearZ));
-
-        this.waypointX = xTest;
-        this.waypointY = yTest;
-        this.waypointZ = zTest;
-
-    }
-
-    protected void setRandomWaypoint(double x, double y, double z, double range) {
-        this.waypointX = (x + (this.rand.nextFloat() * 2F - 1F) * range);
-        this.waypointY = (y + (this.rand.nextFloat() - 0.25F) * range / 4);
-        this.waypointZ = (z + (this.rand.nextFloat() * 2F - 1F) * range);
-    }
-
-    protected void setRandomWaypointTowardsTarget(double dub) {
-        int xSca = (int) Math.copySign(dub, this.targetX - this.posX);
-        int zSca = (int) Math.copySign(dub, this.targetZ - this.posZ);
-
-        this.waypointX = this.posX + this.rand.nextDouble() * xSca;
-        this.waypointY = this.posY + this.rand.nextDouble() * 8 - 4;
-        this.waypointZ = this.posZ + this.rand.nextDouble() * zSca;
     }
 
     protected void setRandomTargetPoint(double x, double y, double z,
@@ -1505,7 +1402,8 @@ public class EntityAuru extends EntityLiving implements IMob,
 
     @Override
     public boolean getCanSpawnHere() {
-        return super.getCanSpawnHere();
+        posY = this.worldObj.getHeightValue((int) posX, (int) posZ) + 2;
+        return super.getCanSpawnHere() && rand.nextInt(100) <= 2 && posY >= 50 && posY >= this.worldObj.getHeightValue((int) posX, (int) posZ) - 8;
     }
 
     @Override
@@ -1515,7 +1413,7 @@ public class EntityAuru extends EntityLiving implements IMob,
 
     @Override
     protected boolean canDespawn() {
-        return false;
+        return false;//super.canDespawn();
     }
 
     public boolean isRayOpen(double x1, double y1, double z1, double x2,
@@ -1523,6 +1421,10 @@ public class EntityAuru extends EntityLiving implements IMob,
         MovingObjectPosition mop = this.worldObj.rayTraceBlocks(this.worldObj
                 .getWorldVec3Pool().getVecFromPool(x1, y1, z1), this.worldObj
                 .getWorldVec3Pool().getVecFromPool(x2, y2, z2));
+        if (mop != null && mop.typeOfHit == EnumMovingObjectType.TILE) {
+            int id = worldObj.getBlockId(mop.blockX, mop.blockY, mop.blockZ);
+            return Block.blocksList[id].getBlocksMovement(worldObj, mop.blockX, mop.blockY, mop.blockZ);
+        }
 
         return mop == null;
     }
@@ -1532,16 +1434,16 @@ public class EntityAuru extends EntityLiving implements IMob,
                 32);
 
         if (potentialHidingSpot != null) {
+
             double currX = (this.boundingBox.minX + this.boundingBox.maxX) / 2;
-            double currY = this.boundingBox.minY + 0.5;
+            double currY = (this.boundingBox.minY) + 0.01d;// + this.boundingBox.maxY) / 2;
             double currZ = (this.boundingBox.minZ + this.boundingBox.maxZ) / 2;
 
-            findPathBetween((int) Math.floor(currX), (int) Math.floor(currY),
-                    (int) Math.floor(currZ),
+            findPathBetween((int) Math.floor(currX),
+                    (int) Math.floor(currY), (int) Math.floor(currZ),
                     (int) Math.floor(potentialHidingSpot.minX),
                     (int) Math.floor(potentialHidingSpot.minY),
                     (int) Math.floor(potentialHidingSpot.minZ));
-
         }
     }
 
@@ -1618,8 +1520,8 @@ public class EntityAuru extends EntityLiving implements IMob,
     }
 
     private void breadCrumbs() {
-        // markPath = !markPath;
-        if (markPath && worldObj.rand.nextInt(2) == 0) {
+        markPath = false;
+        if (markPath && worldObj.rand.nextInt(50) < path.size()) {
             AStarNode step = path.get(path.size() - 1);
             if (worldObj.isAirBlock(step.x, step.y, step.z))
                 worldObj.setBlock(step.x, step.y, step.z,
@@ -1627,7 +1529,6 @@ public class EntityAuru extends EntityLiving implements IMob,
             else if (worldObj.isAirBlock(step.x, step.y + 1, step.z))
                 worldObj.setBlock(step.x, step.y + 1, step.z,
                         Aurus.pathMarker.blockID);
-
         }
     }
 
@@ -1670,7 +1571,7 @@ public class EntityAuru extends EntityLiving implements IMob,
 
             double d1sq = dX1 * dX1 + dY1 * dY1 + dZ1 * dZ1;
 
-            if (d1sq > 0.250D) {
+            if (d1sq > 0.50D) {
                 double d1 = MathHelper.sqrt_double(d1sq);
                 this.motionX += dX1 / d1 * 0.095D;
                 this.motionY += dY1 / d1 * 0.095D;

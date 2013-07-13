@@ -17,7 +17,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.*;
-import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -29,6 +28,8 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
     public ArrayList<AStarNode> path = null;
     public ArrayList<AStarNode> pathBack = null;
+    public ArrayList<AStarNode> crumbs = null;
+    private int crumbDelay = 0;
 
     public int courseChangeCooldown = 0;
     public double waypointX;
@@ -171,6 +172,8 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
         despawnEntity();
         this.prevAttackCounter = this.attackCounter;
+
+        placeBreadCrumbs();
 
         if (path != null) {
             // if I have successfully found a path to a hiding spot and I don't
@@ -405,10 +408,11 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
         int j = MathHelper.floor_double(this.boundingBox.minY);
         int k = MathHelper.floor_double(this.posZ);
 
-        if (this.worldObj.getSavedLightValue(EnumSkyBlock.Sky, i, j, k) > this.rand
+   /*     if (this.worldObj.getSavedLightValue(EnumSkyBlock.Sky, i, j, k) > this.rand
                 .nextInt(32)) {
             return false;
-        } else {
+        } else */
+        {
             int l = this.worldObj.getBlockLightValue(i, j, k);
 
             if (this.worldObj.isThundering()) {
@@ -418,7 +422,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
                 this.worldObj.skylightSubtracted = i1;
             }
 
-            return l <= this.rand.nextInt(6);
+            return l + this.rand.nextInt(8) <= this.rand.nextInt(8);
         }
     }
 
@@ -430,7 +434,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
     }
 
     public boolean isTorchNearby() {
-        AxisAlignedBB aabb = this.boundingBox.copy().expand(4, 4, 4);
+        AxisAlignedBB aabb = this.boundingBox.copy().expand(2, 2, 2);
         for (int i = (int) (Math.floor(aabb.minX)); i <= (int) (Math
                 .floor(aabb.maxX)); i++) {
             for (int j = (int) (Math.floor(aabb.minY)); j <= (int) (Math
@@ -439,7 +443,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
                         .floor(aabb.maxZ)); k++) {
                     if (worldObj.getBlockId(i, j, k) == Block.torchWood.blockID) {
                         System.out
-                                .printf("Spawned Eydas near a torch at (%d, %d, %d).\n",
+                                .printf("Spawned Eyedas near a torch at (%d, %d, %d).\n",
                                         i, j, k);
                         return true;
                     }
@@ -504,18 +508,9 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
             playerStack = player.inventory.getCurrentItem();
 
             if (playerStack != null) {
-                // findPathBetween((int) Math.floor(this.boundingBox.minX +
-                // this.width / 2),
-                // (int) Math.floor(this.boundingBox.minY + (this.height -
-                // Math.floor(this.height)/2) ),
-                // (int) Math.floor(this.boundingBox.minZ + this.width / 2),
-                //
-                // (int) potentialHidingSpot.minX,
-                // (int) potentialHidingSpot.minY,
-                // (int) potentialHidingSpot.minZ);
 
                 double currX = (this.boundingBox.minX + this.boundingBox.maxX) / 2;
-                double currY = this.boundingBox.minY + 0.5;
+                double currY = (this.boundingBox.minY + 0.1d);// + this.boundingBox.maxY) / 2;
                 double currZ = (this.boundingBox.minZ + this.boundingBox.maxZ) / 2;
 
                 findPathBetween((int) Math.floor(currX),
@@ -541,7 +536,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
                 .getWorldVec3Pool().getVecFromPool(x2, y2, z2));
         if (mop != null && mop.typeOfHit == EnumMovingObjectType.TILE) {
             int id = worldObj.getBlockId(mop.blockX, mop.blockY, mop.blockZ);
-            return !Block.blocksList[id].getBlocksMovement(worldObj, mop.blockX, mop.blockY, mop.blockZ);
+            return Block.blocksList[id].getBlocksMovement(worldObj, mop.blockX, mop.blockY, mop.blockZ);
 //                   if(id == Block.doorWood.blockID || id == Block.doorIron.blockID){
 //                       return !Block.doorWood.getBlocksMovement(worldObj, mop.blockX,mop.blockY, mop.blockZ);
 //                   }
@@ -558,13 +553,12 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
         // ensures hiding spots are not preferentially in any one direction
         int attempts = 52 + worldObj.rand.nextInt(13);
 
-        boolean found = false;
 
         double x, y, z, xOff, yOff, zOff;
 
         float angle, radius;
 
-        while (attempts > 0 && !found) {
+        while (attempts > 0) {
             attempts--;
 
             // 2.39996 is the golden angle in radians. using it as the
@@ -622,16 +616,25 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
         return indexMinusOne + 1;
     }
 
-    private void breadCrumbs() {
-        // markPath = !markPath;
-        if (markPath && worldObj.rand.nextInt(50) < path.size()) {
-            AStarNode step = path.get(path.size() - 1);
-            if (worldObj.isAirBlock(step.x, step.y, step.z))
-                worldObj.setBlock(step.x, step.y, step.z,
-                        Aurus.pathMarker.blockID);
-            else if (worldObj.isAirBlock(step.x, step.y + 1, step.z))
-                worldObj.setBlock(step.x, step.y + 1, step.z,
-                        Aurus.pathMarker.blockID);
+    private void storeBreadCrumbs() {
+        if (markPath) {
+            crumbs.add(path.get(path.size() - 1));
+        }
+    }
+
+    private void placeBreadCrumbs() {
+        if (crumbs != null && !crumbs.isEmpty()) {
+            crumbDelay = (crumbDelay + 1) % 2;
+
+            if (crumbDelay == 0 && markPath/* && worldObj.rand.nextInt(50) < crumbs.size()*/) {
+                AStarNode step = crumbs.remove(0);
+                if (worldObj.isAirBlock(step.x, step.y, step.z))
+                    worldObj.setBlock(step.x, step.y, step.z,
+                            Aurus.pathMarker.blockID);
+                else if (worldObj.isAirBlock(step.x, step.y + 1, step.z))
+                    worldObj.setBlock(step.x, step.y + 1, step.z,
+                            Aurus.pathMarker.blockID);
+            }
         }
     }
 
@@ -640,12 +643,13 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
         // // worldObj.setBlock(as.x, as.y, as.z, Aurus.pathMarker.blockID);
         // // worldObj.setBlock(as.x, as.y, as.z, Block.tallGrass.blockID);
         // }
+        crumbs = new ArrayList<AStarNode>();
 
         if (path.size() > 1) {
             int toBeRemoved = (path.size() - 1) - lastTraversablePathIndex()
                     - 1;
             for (int i = 0; i < toBeRemoved - 1; i++) {
-                breadCrumbs();
+                storeBreadCrumbs();
                 path.remove(path.size() - 1);
             }
         }
@@ -677,7 +681,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
             } else {
 
                 // pathMarking.
-                breadCrumbs();
+                storeBreadCrumbs();
 
                 // brake at key points to avoid drifting off path too far.
                 this.motionX *= 0.2D;
@@ -699,7 +703,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
                     int toBeRemoved = (path.size() - 1)
                             - lastTraversablePathIndex() - 1;
                     for (int i = 0; i < toBeRemoved; i++) {
-                        breadCrumbs();
+                        storeBreadCrumbs();
                         path.remove(path.size() - 1);
                     }
                 }
