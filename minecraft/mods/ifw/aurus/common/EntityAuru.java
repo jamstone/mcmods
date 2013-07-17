@@ -170,7 +170,8 @@ public class EntityAuru extends EntityLiving implements IMob,
         this.experienceValue = 15;
         this.isImmuneToFire = true;
 
-        this.setSize(0.9f, 1.9f); // size determines vanishing point of renders
+        this.setSize(0.9f, 1.9f);
+        this.renderDistanceWeight = 4; // determines vanishing point of renders
 
         attackCounter = rand.nextInt(20) + 50;
         targetHealth = 0;
@@ -454,7 +455,7 @@ public class EntityAuru extends EntityLiving implements IMob,
         // find a good target, regardless of whether I have one or not... but
         // the purpose of this is to retarget if there are chickens around, so
         // maybe add an if statement here to prevent wonky retargeting.
-        if (this.ticksExisted % 100 == 0)
+        if (this.ticksExisted % 10 == 0)
             this.findTarget();
 
         // if I found a target and it's different from my old target, reset my
@@ -510,7 +511,7 @@ public class EntityAuru extends EntityLiving implements IMob,
 
             // if I don't have a visible target, I get impatient and look around
             // my target's location
-            if (this.targetedEntity == null) {
+            if (this.targetedEntity == null || path != null) {
                 patience--;
                 double dX1 = this.targetX - this.posX;
                 double dY1 = this.targetY - this.posY;
@@ -1402,8 +1403,12 @@ public class EntityAuru extends EntityLiving implements IMob,
 
     @Override
     public boolean getCanSpawnHere() {
-        posY = this.worldObj.getHeightValue((int) posX, (int) posZ) + 2;
-        return super.getCanSpawnHere() && rand.nextInt(100) <= 2 && posY >= 50 && posY >= this.worldObj.getHeightValue((int) posX, (int) posZ) - 8;
+        double newposY = this.worldObj.getHeightValue((int) posX, (int) posZ) + 2;
+        this.setPosition(posX, posY, posZ);
+        // TODO: this should be 256 for proper release, but for testing it will be 128 for higher occurrence of aurus in the world.
+        Entity nearestAuru = worldObj.findNearestEntityWithinAABB(EntityAuru.class, this.boundingBox.expand(128, 128, 128), this);
+        //List list = worldObj.getEntitiesWithinAABB(EntityAuru.class, this.boundingBox.expand(128, 128, 128));
+        return super.getCanSpawnHere() && /*rand.nextInt(100) <= 2*/ nearestAuru == null && posY >= 50 && posY >= this.worldObj.getHeightValue((int) posX, (int) posZ) - 8;
     }
 
     @Override

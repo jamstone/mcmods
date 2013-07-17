@@ -617,6 +617,7 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
     }
 
     private void storeBreadCrumbs() {
+        markPath = true;
         if (markPath) {
             crumbs.add(path.get(path.size() - 1));
         }
@@ -624,10 +625,19 @@ public class EntityEye extends EntityFlying implements IMob, IAStarPathedEntity 
 
     private void placeBreadCrumbs() {
         if (crumbs != null && !crumbs.isEmpty()) {
-            crumbDelay = (crumbDelay + 1) % 2;
+            crumbDelay = (crumbDelay + 1) % 3;
 
-            if (crumbDelay == 0 && markPath/* && worldObj.rand.nextInt(50) < crumbs.size()*/) {
+            if (crumbDelay == 0 && crumbs.size() >= 4/* && markPath && worldObj.rand.nextInt(50) < crumbs.size()*/) {
+                crumbs.remove(0);
+                crumbs.remove(0);
                 AStarNode step = crumbs.remove(0);
+                if (worldObj.isAirBlock(step.x, step.y, step.z))
+                    worldObj.setBlock(step.x, step.y, step.z,
+                            Aurus.pathMarker.blockID);
+                else if (worldObj.isAirBlock(step.x, step.y + 1, step.z))
+                    worldObj.setBlock(step.x, step.y + 1, step.z,
+                            Aurus.pathMarker.blockID);
+                step = crumbs.remove(0);
                 if (worldObj.isAirBlock(step.x, step.y, step.z))
                     worldObj.setBlock(step.x, step.y, step.z,
                             Aurus.pathMarker.blockID);

@@ -33,9 +33,7 @@ public class EntityProjectile extends Entity {
     public EntityProjectile(World par1World) {
         super(par1World);
         this.setSize(1.0F, 1.0F);
-        // System.out.println("I am a constructor call.");
-        // System.out.println(this);
-        // System.out.println(this.worldObj);
+        this.renderDistanceWeight = 4;
     }
 
     public EntityProjectile(World world, double x, double y, double z,
@@ -82,9 +80,9 @@ public class EntityProjectile extends Entity {
         this.accelerationY = dY / hyp * 0.1D;
         this.accelerationZ = dZ / hyp * 0.1D;
 
-        double offX = dX / hyp * this.width * 2;
-        double offY = dY / hyp * this.width * 2;
-        double offZ = dZ / hyp * this.width * 2;
+        double offX = dX / hyp * (originEntity.width + this.width) * 1.1;
+        double offY = dY / hyp * (originEntity.width + this.width) * 1.1;
+        double offZ = dZ / hyp * (originEntity.width + this.width) * 1.1;
 
         this.setLocationAndAngles(originX + offX, originY + offY, originZ
                 + offZ, originEntity.rotationYaw, originEntity.rotationPitch);
