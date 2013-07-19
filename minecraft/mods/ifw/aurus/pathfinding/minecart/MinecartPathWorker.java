@@ -1,5 +1,6 @@
-package mods.ifw.aurus.pathfinding.bullshit;
+package mods.ifw.aurus.pathfinding.minecart;
 
+import mods.ifw.aurus.pathfinding.*;
 import net.minecraft.block.Block;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
@@ -10,7 +11,7 @@ import java.util.TreeMap;
 
 // TODO: add a AABB field for use in 'isViable'
 
-public class AStarWorkerJPS3D extends AStarWorker {
+public class MinecartPathWorker extends AStarWorker {
     /**
      * Important preset value. Determines after how many non-jump-nodes in a
      * direction an abort is executed, in order to prevent near-infinite loops
@@ -39,7 +40,7 @@ public class AStarWorkerJPS3D extends AStarWorker {
     private int resolution = 1;
     private AStarNode currentNode;
 
-    public AStarWorkerJPS3D(AStarPathPlanner creator) {
+    public MinecartPathWorker(AStarPathPlanner creator) {
         super(creator);
         openQueue = new PriorityQueue<AStarNode>();
     }

@@ -1,11 +1,14 @@
 package mods.ifw.aurus.common;
 
-import mods.ifw.aurus.pathfinding.bullshit.AStarNode;
-import mods.ifw.aurus.pathfinding.bullshit.AStarWorkerJPS3D;
+import mods.ifw.aurus.pathfinding.AStarNode;
+import mods.ifw.aurus.pathfinding.AStarWorkerJPS3D;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.BiomeGenBase;
 
 import java.util.ArrayList;
 
@@ -13,12 +16,12 @@ public class BlockPathFinder extends Block {
 
     public BlockPathFinder(int par1, Material par2Material) {
         super(par1, par2Material);
-        //setCreativeTab(CreativeTabs.tabBlock);
+        setCreativeTab(CreativeTabs.tabBlock);
     }
 
     public BlockPathFinder(int par1, int par2, Material par3Material) {
         super(par1, par3Material);
-        //setCreativeTab(CreativeTabs.tabBlock);
+        setCreativeTab(CreativeTabs.tabBlock);
     }
 
     /*
@@ -36,54 +39,59 @@ public class BlockPathFinder extends Block {
         }
 
         int scalar = 2;
+        System.out.println("checking...");
 
-        int x = par2 + (par1World.rand.nextInt(32) - 16) * scalar;
-        int y = par3;// + (par1World.rand.nextInt(32) - 16) * scalar;
-        int z = par4 + (par1World.rand.nextInt(32) - 16) * scalar;
+        // nearest biome
 
-        while (!par1World.isAirBlock(x, y, z)) {
-            x = par2 + (par1World.rand.nextInt(32) - 16) * scalar;
-            y = par3;// + (par1World.rand.nextInt(32) - 16) * scalar;
-            z = par4 + (par1World.rand.nextInt(32) - 16) * scalar;
+        BiomeGenBase targetBiome = BiomeGenBase.river;
+        ChunkPosition cpos = null;
+
+        int startX = par2;
+        int startZ = par4;
+
+        int chunkRadius = 1;
+        int maxRange = 64;
+
+        while (chunkRadius < maxRange) {
+            for (int i = -chunkRadius; i < chunkRadius && chunkRadius < maxRange; i++) {
+                for (int j = -chunkRadius; j < chunkRadius && chunkRadius < maxRange; j++) {
+                    if (Math.abs(i) != chunkRadius && Math.abs(j) != chunkRadius) {
+                        continue;
+                    }
+                    if (par1World.getWorldChunkManager().getBiomeGenAt(startX + i * 16, startZ + j * 16) == targetBiome) {
+                        cpos = new ChunkPosition(startX + i * 16, par1World.getHeightValue(startX + i * 16, startZ + j * 16) + 4, startZ + j * 16);
+                        chunkRadius = maxRange + 1;
+                        break;
+                    }
+                }
+            }
+            chunkRadius++;
         }
-
+        if (cpos != null) {
+            System.out.printf("Biome located at (%d, %d) is %s.%n", cpos.x, cpos.z, targetBiome.biomeName);
+        } else {
+            System.out.println("failed to find " + targetBiome.biomeName);
+            return true;
+        }
+        int x = cpos.x;//par2 + (par1World.rand.nextInt(32) - 16) * scalar;
+        int y = cpos.y;// + (par1World.rand.nextInt(32) - 16) * scalar;
+        int z = cpos.z;//par4 + (par1World.rand.nextInt(32) - 16) * scalar;
+//
+//        while (!par1World.isAirBlock(x, y, z)) {
+//            x = par2 + (par1World.rand.nextInt(32) - 16) * scalar;
+//            y = par3;// + (par1World.rand.nextInt(32) - 16) * scalar;
+//            z = par4 + (par1World.rand.nextInt(32) - 16) * scalar;
+//        }
+//
         AStarNode start = new AStarNode(par2, par3, par4, null);
         AStarNode goal = new AStarNode(x, y, z, null);
-
-        // JPPathFinder jp = new JPPathFinder(new AStarPath(par1World));
-
+//
+//        // JPPathFinder jp = new JPPathFinder(new AStarPath(par1World));
+//
         AStarWorkerJPS3D aswJP3D = new AStarWorkerJPS3D(null);
 
         aswJP3D.setup(par1World, start, goal, null);
 
-        // Direction directionToParent = Direction.D;
-        // Direction directionToNode = Direction.DSE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.SE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.USE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.DE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.E;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.UE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.DNE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.NE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
-        // directionToNode = Direction.UNE;
-        // System.out.println(asw.edgesAndFacesBlocking(directionToParent,
-        // directionToNode).toString());
 
         ArrayList<AStarNode> path = aswJP3D.getPath(start, goal, false);
 
@@ -101,7 +109,13 @@ public class BlockPathFinder extends Block {
                 if (as.equals(start) || as.equals(goal)) {
                 } else {
                     par1World.setBlock(as.x, as.y, as.z,
-                            Aurus.pathMarker.blockID);
+                            Block.blockNetherQuartz.blockID);
+                    if (par1World.getBlockId(as.x, as.y + 1, as.z) != Block.blockNetherQuartz.blockID) {
+                        par1World.setBlock(as.x, as.y + 1, as.z,
+                                Block.rail.blockID);
+                    }
+//                    par1World.setBlock(as.x, as.y, as.z,
+//                            Aurus.pathMarker.blockID);
                 }
             }
         } else {
@@ -111,4 +125,5 @@ public class BlockPathFinder extends Block {
         return super.onBlockActivated(par1World, par2, par3, par4,
                 par5EntityPlayer, par6, par7, par8, par9);
     }
+
 }

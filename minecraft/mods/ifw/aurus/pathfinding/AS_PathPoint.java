@@ -1,31 +1,26 @@
-package mods.ifw.aurus.pathfinding.bullshit;
-
-import java.lang.reflect.Field;
+package mods.ifw.aurus.pathfinding;
 
 import net.minecraft.pathfinding.PathPoint;
 
+import java.lang.reflect.Field;
+
 /**
  * PathPoint extension for field access.
- * 
- * 
- * @author AtomicStryker
  *
+ * @author AtomicStryker
  */
-public class AS_PathPoint extends PathPoint
-{
+public class AS_PathPoint extends PathPoint {
     private static boolean init = false;
     private static Field fieldIndex;
     private static Field fieldTotalDistance;
     private static Field fieldDistanceToNext;
     private static Field fieldDistanceToTarget;
     private static Field fieldPrevPathPoint;
-    
-    public AS_PathPoint(int par1, int par2, int par3)
-    {
+
+    public AS_PathPoint(int par1, int par2, int par3) {
         super(par1, par2, par3);
-        
-        if (!init)
-        {
+
+        if (!init) {
             Class<?> ppClass = getClass().getSuperclass();
             fieldIndex = ppClass.getDeclaredFields()[4];
             fieldIndex.setAccessible(true);
@@ -40,41 +35,32 @@ public class AS_PathPoint extends PathPoint
             init = true;
         }
     }
-    
-    private void setFieldValue(Field f, Object v)
-    {
-        try
-        {
+
+    private void setFieldValue(Field f, Object v) {
+        try {
             f.set(this, v);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void setIndex(int i)
-    {
+    public void setIndex(int i) {
         setFieldValue(fieldIndex, i);
     }
 
-    public void setTotalPathDistance(float f)
-    {
+    public void setTotalPathDistance(float f) {
         setFieldValue(fieldTotalDistance, f);
     }
 
-    public void setDistanceToNext(float f)
-    {
+    public void setDistanceToNext(float f) {
         setFieldValue(fieldDistanceToNext, f);
     }
 
-    public void setDistanceToTarget(float f)
-    {
+    public void setDistanceToTarget(float f) {
         setFieldValue(fieldDistanceToTarget, f);
     }
 
-    public void setPrevious(PathPoint pp)
-    {
+    public void setPrevious(PathPoint pp) {
         setFieldValue(fieldPrevPathPoint, pp);
     }
 }

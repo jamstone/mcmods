@@ -18,7 +18,6 @@ public class ItemDragonBlood extends Item {
 
     @Override
     public int getEntityLifespan(ItemStack itemStack, World world) {
-        // TODO Auto-generated method stub
         return 800;
     }
 

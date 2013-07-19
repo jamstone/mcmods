@@ -2,7 +2,7 @@ package mods.ifw.aurus.common;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import mods.ifw.aurus.pathfinding.bullshit.Direction;
+import mods.ifw.aurus.pathfinding.Direction;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.AxisAlignedBB;

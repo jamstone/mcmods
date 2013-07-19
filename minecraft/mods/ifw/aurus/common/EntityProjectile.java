@@ -244,7 +244,12 @@ public class EntityProjectile extends Entity {
             this.motionX *= (double) f2;
             this.motionY *= (double) f2;
             this.motionZ *= (double) f2;
-            this.worldObj.spawnParticle("smoke", this.posX, this.posY + 0.5D, this.posZ, 0.0D, 0.0D, 0.0D);
+            if (ticksExisted == 1) {
+                worldObj.spawnParticle("largeexplode", posX - 5 * motionX, posY - 5 * motionY + 0.5, posZ - 5 * motionZ,
+                        1.5D, 0.0D, 0.0D);
+            } else {
+                this.worldObj.spawnParticle("smoke", this.posX, this.posY + 0.5D, this.posZ, 0.0D, 0.0D, 0.0D);
+            }
             this.setPosition(this.posX, this.posY, this.posZ);
         }
     }
@@ -256,13 +261,8 @@ public class EntityProjectile extends Entity {
         return 0.95F;
     }
 
-    protected void hitEntityLiving(EntityAuru entity) {
-        entity.attackEntityFrom(
-                DamageSource.causeMobDamage(this.shootingEntity), 10);
-    }
-
     protected void hitEntityLiving(EntityLiving entity) {
-        int damage = entity instanceof EntityAuru ? 10 : 4;
+        int damage = entity instanceof EntityAuru ? 17 : 4;
         entity.attackEntityFrom(
                 DamageSource.causeMobDamage(this.shootingEntity), damage);
     }

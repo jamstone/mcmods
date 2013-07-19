@@ -1,8 +1,8 @@
 package mods.ifw.aurus.common;
 
-import mods.ifw.aurus.pathfinding.bullshit.AStarNode;
-import mods.ifw.aurus.pathfinding.bullshit.AStarPathPlanner;
-import mods.ifw.aurus.pathfinding.bullshit.IAStarPathedEntity;
+import mods.ifw.aurus.pathfinding.AStarNode;
+import mods.ifw.aurus.pathfinding.AStarPathPlanner;
+import mods.ifw.aurus.pathfinding.IAStarPathedEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.StepSound;
 import net.minecraft.entity.Entity;
@@ -291,7 +291,7 @@ public class EntityAuru extends EntityLiving implements IMob,
 
     @Override
     public int getMaxHealth() {
-        return 25;
+        return 50;
     }
 
     @Override

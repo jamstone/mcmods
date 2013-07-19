@@ -1,8 +1,8 @@
 package mods.ifw.aurus.common;
 
-import mods.ifw.aurus.pathfinding.bullshit.AStarNode;
-import mods.ifw.aurus.pathfinding.bullshit.AStarPathPlanner;
-import mods.ifw.aurus.pathfinding.bullshit.IAStarPathedEntity;
+import mods.ifw.aurus.pathfinding.AStarNode;
+import mods.ifw.aurus.pathfinding.AStarPathPlanner;
+import mods.ifw.aurus.pathfinding.IAStarPathedEntity;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.EnchantmentThorns;
