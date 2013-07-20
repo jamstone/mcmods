@@ -1,17 +1,25 @@
 *.class
-
+ 
 # Package Files #
 *.jar
 *.war
 *.ear
-
+ 
 # Config Files #
-
-
+ 
+ 
 # Minecraft Folders #
-
+ 
 */atomicstryker/*
 */cpw/*
 */ibxm/*
 */net/*
 */paulscode/*
+/minecraft/Start.java
+/minecraft/fml_at.cfg
+/minecraft/fml_marker.cfg
+/minecraft/fmlversion.properties
+/minecraft/forge_at.cfg
+/minecraft/forge_logo.png
+/minecraft/mcp.png
+/minecraft/mcpmod.info
