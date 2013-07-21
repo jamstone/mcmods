@@ -1,8 +1,8 @@
 package mods.ifw.aurus.common;
 
-import mods.ifw.aurus.pathfinding.AStarNode;
-import mods.ifw.aurus.pathfinding.AStarPathPlanner;
-import mods.ifw.aurus.pathfinding.IAStarPathedEntity;
+import mods.ifw.pathfinding.AStarNode;
+import mods.ifw.pathfinding.AStarPathPlanner;
+import mods.ifw.pathfinding.IAStarPathedEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.StepSound;
 import net.minecraft.entity.Entity;

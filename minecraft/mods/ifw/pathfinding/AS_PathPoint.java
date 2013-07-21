@@ -1,4 +1,4 @@
-package mods.ifw.aurus.pathfinding;
+package mods.ifw.pathfinding;
 
 import net.minecraft.pathfinding.PathPoint;
 

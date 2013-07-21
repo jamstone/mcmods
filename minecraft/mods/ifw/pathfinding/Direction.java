@@ -1,4 +1,4 @@
-package mods.ifw.aurus.pathfinding;
+package mods.ifw.pathfinding;
 
 public enum Direction {
     O(0, 0, 0, 0), U(0, 1, 0, 1), UN(0, 1, 1, 2), UNE(1, 1, 1, 3), UE(1, 1, 0,

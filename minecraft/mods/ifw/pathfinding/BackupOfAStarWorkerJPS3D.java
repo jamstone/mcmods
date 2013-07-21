@@ -1,4 +1,4 @@
-//package mods.ifw.aurus.pathfinding.bullshit;
+//package mods.ifw.pathfinding.bullshit;
 //
 //import java.util.ArrayList;
 //import java.util.PriorityQueue;

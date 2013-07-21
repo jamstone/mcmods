@@ -167,7 +167,7 @@ public class Aurus implements ITickHandler {
         GameRegistry.registerBlock(blockBogGas);
 
         blockNest = new BlockNest(nestID, "").setUnlocalizedName(modid
-                + "blockNest");
+                + "blockStation");
         LanguageRegistry.addName(blockNest, "Nest Shell");
         GameRegistry.registerBlock(blockNest, blockNest.getUnlocalizedName2());
 

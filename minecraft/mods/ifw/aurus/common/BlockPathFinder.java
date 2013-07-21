@@ -1,7 +1,7 @@
 package mods.ifw.aurus.common;
 
-import mods.ifw.aurus.pathfinding.AStarNode;
-import mods.ifw.aurus.pathfinding.AStarWorkerJPS3D;
+import mods.ifw.pathfinding.AStarNode;
+import mods.ifw.pathfinding.minecart.MinecartPathWorker;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
@@ -43,14 +43,14 @@ public class BlockPathFinder extends Block {
 
         // nearest biome
 
-        BiomeGenBase targetBiome = BiomeGenBase.river;
+        BiomeGenBase targetBiome = BiomeGenBase.mushroomIsland;
         ChunkPosition cpos = null;
 
         int startX = par2;
         int startZ = par4;
 
         int chunkRadius = 1;
-        int maxRange = 64;
+        int maxRange = 640;
 
         while (chunkRadius < maxRange) {
             for (int i = -chunkRadius; i < chunkRadius && chunkRadius < maxRange; i++) {
@@ -88,35 +88,37 @@ public class BlockPathFinder extends Block {
 //
 //        // JPPathFinder jp = new JPPathFinder(new AStarPath(par1World));
 //
-        AStarWorkerJPS3D aswJP3D = new AStarWorkerJPS3D(null);
+//        AStarWorkerJPS3D aswJP3D = new AStarWorkerJPS3D(null);
+//
+//        aswJP3D.setup(par1World, start, goal, null);
 
-        aswJP3D.setup(par1World, start, goal, null);
+        MinecartPathWorker mcpp = new MinecartPathWorker(null);
+        mcpp.setup(par1World, start, goal, null);
 
-
-        ArrayList<AStarNode> path = aswJP3D.getPath(start, goal, false);
+        ArrayList<AStarNode> path = mcpp.getPath(start, goal);
 
         if (path != null) {
 
+            AStarNode lastAs = null;
+            AStarNode lastlastAs = null;
+
             for (AStarNode as : path) {
-//				if (as.equals(start) || as.equals(goal)) {
-//					par1World.setBlock(as.x, as.y, as.z,
-//							Aurus.pathFinder.blockID);
-//				} else {
-//					par1World.setBlock(as.x, as.y, as.z,
-//							Block.glowStone.blockID);
-//				}
 
                 if (as.equals(start) || as.equals(goal)) {
                 } else {
                     par1World.setBlock(as.x, as.y, as.z,
-                            Block.blockNetherQuartz.blockID);
-                    if (par1World.getBlockId(as.x, as.y + 1, as.z) != Block.blockNetherQuartz.blockID) {
+                            Block.blockRedstone.blockID);
+                    if (par1World.getBlockId(as.x, as.y + 1, as.z) != Block.blockRedstone.blockID) {
                         par1World.setBlock(as.x, as.y + 1, as.z,
+                                Block.railPowered.blockID);
+                    }
+                    if (lastlastAs != null && lastlastAs.getDirectionTo(lastAs) != lastAs.getDirectionTo(as)) {
+                        par1World.setBlock(lastAs.x, lastAs.y + 1, lastAs.z,
                                 Block.rail.blockID);
                     }
-//                    par1World.setBlock(as.x, as.y, as.z,
-//                            Aurus.pathMarker.blockID);
                 }
+                lastlastAs = lastAs;
+                lastAs = as;
             }
         } else {
             System.out.println("Failed to find a path.");

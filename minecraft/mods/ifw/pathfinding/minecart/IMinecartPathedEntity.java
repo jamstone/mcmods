@@ -1,4 +1,6 @@
-package mods.ifw.aurus.pathfinding;
+package mods.ifw.pathfinding.minecart;
+
+import mods.ifw.pathfinding.AStarNode;
 
 import java.util.ArrayList;
 
@@ -10,7 +12,7 @@ import java.util.ArrayList;
  * @author AtomicStryker
  */
 
-public interface IAStarPathedEntity {
+public interface IMinecartPathedEntity {
     /**
      * Returned by a Pathfinding worker that found a solution for the
      * provided Start and End Nodes. Solution is provided as list of

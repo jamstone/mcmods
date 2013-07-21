@@ -1,6 +1,9 @@
-package mods.ifw.aurus.pathfinding.minecart;
+package mods.ifw.pathfinding.minecart;
 
-import mods.ifw.aurus.pathfinding.*;
+import mods.ifw.pathfinding.AStarNode;
+import mods.ifw.pathfinding.AStarStatic;
+import mods.ifw.pathfinding.Direction;
+import mods.ifw.pathfinding.Weight;
 import net.minecraft.block.Block;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
@@ -11,7 +14,7 @@ import java.util.TreeMap;
 
 // TODO: add a AABB field for use in 'isViable'
 
-public class MinecartPathWorker extends AStarWorker {
+public class MinecartPathWorker extends Thread {
     /**
      * Important preset value. Determines after how many non-jump-nodes in a
      * direction an abort is executed, in order to prevent near-infinite loops
@@ -21,7 +24,9 @@ public class MinecartPathWorker extends AStarWorker {
      */
     private final static int MAX_SKIP_DISTANCE = AStarStatic
             .getDistanceBetween(0, 0, 0, 0, 0, 24);
+    private static final long SEARCH_TIME_LIMIT = 5000L;
     private final PriorityQueue<AStarNode> openQueue;
+    private final MinecartPathPlanner boss;
     public TreeMap<String, AStarNode> closedNodesTree = new TreeMap<String, AStarNode>();
     public Direction plane = Direction.UNE;
     private AStarNode startNode;
@@ -29,8 +34,8 @@ public class MinecartPathWorker extends AStarWorker {
     private int sorts = 0;
     private int checks = 0;
     private AxisAlignedBB bounds;
-    private int width = 1;
-    private int height = 1;
+    private int width = 3;
+    private int height = 3;
     // resolution determines the number of blocks in a block. 2*2*2 for example
     // means 8 blocks will be checked in a block, and each step in the path will
     // be at least 2 blocks apart. This means that the path can no longer fit
@@ -39,9 +44,11 @@ public class MinecartPathWorker extends AStarWorker {
     // this is a good practice when dealing with open air or long distances.
     private int resolution = 1;
     private AStarNode currentNode;
+    private long timeLimit;
+    private World worldObj;
 
-    public MinecartPathWorker(AStarPathPlanner creator) {
-        super(creator);
+    public MinecartPathWorker(MinecartPathPlanner creator) {
+        boss = creator;
         openQueue = new PriorityQueue<AStarNode>();
     }
 
@@ -50,21 +57,36 @@ public class MinecartPathWorker extends AStarWorker {
         int id = worldObj.getBlockId(ix, iy, iz);
         if (id != 0 && Block.blocksList[id] != null) {
             return Block.blocksList[id].getBlocksMovement(worldObj, ix, iy, iz);
-//            if (!Block.blocksList[id].blockMaterial.isSolid()) {
-//                return true;
-////            } else if (Block.blocksList[id].renderAsNormalBlock()) {
-////                return false;
-//            } else {
-//                return Block.blocksList[id].getBlocksMovement(worldObj, ix, iy, iz);
-//            }
         }
 
         return true;
     }
 
+    public void run() {
+        timeLimit = System.currentTimeMillis() + SEARCH_TIME_LIMIT + 100 * AStarStatic.getDistanceBetween(startNode.x, startNode.y, startNode.z, targetNode.x, targetNode.y, targetNode.z);
+        ArrayList<AStarNode> result = null;
+        long time = System.nanoTime();
+        result = getPath(startNode, targetNode);
+        time = System.nanoTime() - time;
+
+        if (result == null) {
+            //System.out.println(getClass()+" finished. No path.");
+            System.out.println("Total time in Seconds: " + time / 1000000000D);
+            boss.onNoPathAvailable();
+        } else {
+            //System.out.println(getClass()+" finished. Path Length: "+result.size());
+            System.out.println("Total time in Seconds: " + time / 1000000000D);
+            boss.onFoundPath(this, result);
+        }
+    }
+
     public void setup(World winput, AStarNode start_, AStarNode end_,
                       AxisAlignedBB boundingBox) {
-        super.setup(winput, start_, end_, false);
+
+        worldObj = winput;
+        startNode = start_;
+        targetNode = end_;
+
 
         if (boundingBox != null) {
             width = (int) Math.ceil(Math.max(boundingBox.maxX
@@ -74,9 +96,8 @@ public class MinecartPathWorker extends AStarWorker {
 
     }
 
-    @Override
-    public ArrayList<AStarNode> getPath(AStarNode start, AStarNode end,
-                                        boolean bool) {
+
+    public ArrayList<AStarNode> getPath(AStarNode start, AStarNode end) {
         setBounds(start.x, start.y, start.z, end.x, end.y, end.z, 12);
 
         // openQueue.offer(start);
@@ -262,7 +283,6 @@ public class MinecartPathWorker extends AStarWorker {
         return null;
     }
 
-    @Override
     protected boolean shouldInterrupt() {
         if (this.boss == null) {
             return false;
@@ -479,7 +499,11 @@ public class MinecartPathWorker extends AStarWorker {
                     if (!(i == 0 && j == 0 && k == 0)
                             && (i * plane.x == i && j * plane.y == j && k
                             * plane.z == k)) {
-                        neighbours.add(Direction.getDirection(i, j, k));
+                        Direction dir = Direction.getDirection(i, j, k);
+                        // temporary limiter on directions that are tricky to rebuild.
+                        if (dir != Direction.U && dir != Direction.D && dir.weight != Weight.D3) {
+                            neighbours.add(dir);
+                        }
                     }
                 }
             }
@@ -815,8 +839,7 @@ public class MinecartPathWorker extends AStarWorker {
         int w = Math.max(resolution, width);
         int h = Math.max(resolution, height);
 
-        if (!bounds.intersectsWith(AxisAlignedBB.getBoundingBox(tx, ty, tz, tx
-                + w, ty + h, tz + w))) {
+        if (!(tx > bounds.minX && tx < bounds.maxX && ty > bounds.minY && ty < bounds.maxY && tz > bounds.minZ && tz < bounds.maxZ)) {
             return false;
         }
 
@@ -1020,7 +1043,7 @@ public class MinecartPathWorker extends AStarWorker {
                 // fix diagonal collisions in path so they walk around
                 // corners.
 
-                if (isDiagonalBlockedFrom(x, y, z, dir)) {
+                if (isDiagonalBlockedFrom(x, y, z, dir) || dir.y == 0) {
                     tx = x;
                     ty = y;
                     tz = z;
@@ -1088,7 +1111,7 @@ public class MinecartPathWorker extends AStarWorker {
             }
 
             // fix diagonal collisions in path so they walk around corners.
-            if (isDiagonalBlockedFrom(x, y, z, dir)) {
+            if (isDiagonalBlockedFrom(x, y, z, dir) || dir.y == 0) {
                 tx = x;
                 ty = y;
                 tz = z;
@@ -1404,8 +1427,10 @@ public class MinecartPathWorker extends AStarWorker {
         // Had to change to diagonal-first searches, which may be slower. The
         // paper describing JPS encourages lower order searchers first.
 
-        // openQueue.offer(newNode);
-
+//        AStarNode oldNode = closedNodeAt(newNode);
+//        if (oldNode == null) {
+//            openQueue.offer(newNode);
+//        }
         // this will find the absolute shortest path. ensure diagonal searches
         // are done first.
         AStarNode oldNode = closedNodeAt(newNode);

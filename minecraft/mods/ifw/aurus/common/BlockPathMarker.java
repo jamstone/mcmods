@@ -2,7 +2,7 @@ package mods.ifw.aurus.common;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import mods.ifw.aurus.pathfinding.Direction;
+import mods.ifw.pathfinding.Direction;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.AxisAlignedBB;
@@ -30,7 +30,7 @@ public class BlockPathMarker extends Block {
     @Override
     public boolean getBlocksMovement(IBlockAccess par1IBlockAccess, int par2,
                                      int par3, int par4) {
-        return false;
+        return true;
     }
 
     @Override
