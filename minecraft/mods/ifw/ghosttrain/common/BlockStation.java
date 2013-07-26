@@ -2,7 +2,8 @@ package mods.ifw.ghosttrain.common;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.block.BlockContainer;
+import net.minecraft.block.Block;
+import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
@@ -11,7 +12,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Icon;
 import net.minecraft.world.World;
 
-public class BlockStation extends BlockContainer {
+public class BlockStation extends Block implements ITileEntityProvider {
     @SideOnly(Side.CLIENT)
     private Icon[] icons;
 
@@ -25,11 +26,10 @@ public class BlockStation extends BlockContainer {
     @SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister) {
         icons = new Icon[4];
-
-        icons[0] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0bot");
-        icons[1] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0top");
-        icons[2] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1bot");
-        icons[3] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1top");
+        icons[0b00] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0bot");
+        icons[0b01] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0top");
+        icons[0b10] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1bot");
+        icons[0b11] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1top");
     }
 
     @SideOnly(Side.CLIENT)
@@ -90,12 +90,12 @@ public class BlockStation extends BlockContainer {
      * Called upon block activation (right click on the block.)
      */
     public boolean onBlockActivated(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer, int par6, float par7, float par8, float par9) {
-        TileEntityStation tileEntity = (TileEntityStation) par1World.getBlockTileEntity(par2, par3, par4);
+        TileEntityStation tileEntity = (TileEntityStation) getTileEntity(par1World, par2, par3, par4);
         if (tileEntity == null || par5EntityPlayer.isSneaking()) {
             return false;
         }
 
-        tileEntity.findPathBETA(par1World, par2, par3, par4);
+        tileEntity.onActivatedByPlayer(par1World, par2, par3, par4, par5EntityPlayer);
 
         //code to open gui explained later
         // par5EntityPlayer.openGui(Tiny.instance, 0, world, x, y, z);
@@ -110,9 +110,29 @@ public class BlockStation extends BlockContainer {
     /**
      * Returns a new instance of a block's tile entity class. Called on placing the block.
      */
-    public TileEntity createNewTileEntity(World par1World) {
-        TileEntityStation te = new TileEntityStation(par1World);
+
+    @Override
+    public TileEntity createTileEntity(World world, int metadata) {
+        if (world.isRemote || (metadata & 0b01) == 0b01) {
+            return null;
+        } else {
+            return createNewTileEntity(world);
+        }
+    }
+
+    public TileEntity getTileEntity(World world, int x, int y, int z) {
+        int metadata = world.getBlockMetadata(x, y, z);
+        TileEntityStation te = null;
+        if ((metadata & 0b01) == 0b01) {
+            te = (TileEntityStation) world.getBlockTileEntity(x, y - 1, z);
+        } else {
+            te = (TileEntityStation) world.getBlockTileEntity(x, y, z);
+        }
         return te;
     }
 
+    @Override
+    public TileEntity createNewTileEntity(World world) {
+        return new TileEntityStation(world);
+    }
 }
