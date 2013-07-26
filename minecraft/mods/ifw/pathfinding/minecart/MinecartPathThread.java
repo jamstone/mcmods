@@ -6,6 +6,7 @@ import mods.ifw.pathfinding.Direction;
 import mods.ifw.pathfinding.Weight;
 import net.minecraft.block.Block;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.ChunkCoordIntPair;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.TreeMap;
 
 // TODO: add a AABB field for use in 'isViable'
 
-public class MinecartPathWorker extends Thread {
+public class MinecartPathThread extends Thread {
     /**
      * Important preset value. Determines after how many non-jump-nodes in a
      * direction an abort is executed, in order to prevent near-infinite loops
@@ -26,7 +27,7 @@ public class MinecartPathWorker extends Thread {
             .getDistanceBetween(0, 0, 0, 0, 0, 24);
     private static final long SEARCH_TIME_LIMIT = 5000L;
     private final PriorityQueue<AStarNode> openQueue;
-    private final MinecartPathPlanner boss;
+    private final MinecartPathMediator mediator;
     public TreeMap<String, AStarNode> closedNodesTree = new TreeMap<String, AStarNode>();
     public Direction plane = Direction.UNE;
     private AStarNode startNode;
@@ -43,17 +44,28 @@ public class MinecartPathWorker extends Thread {
     // faster.
     // this is a good practice when dealing with open air or long distances.
     private int resolution = 1;
-    private AStarNode currentNode;
+    AStarNode currentNode;
     private long timeLimit;
     private World worldObj;
 
-    public MinecartPathWorker(MinecartPathPlanner creator) {
-        boss = creator;
+    public MinecartPathThread(MinecartPathMediator creator) {
+        mediator = creator;
         openQueue = new PriorityQueue<AStarNode>();
     }
 
     // For some reason, getBlocksMovement is backwards?
-    public static boolean isPassableBlock(World worldObj, int ix, int iy, int iz) {
+    public boolean isPassableBlock(World worldObj, int ix, int iy, int iz) {
+        while (!worldObj.checkChunksExist(ix, iy, iz, ix, iy, iz)) {
+            try {
+                ArrayList<ChunkCoordIntPair> chunksNeeded = new ArrayList<ChunkCoordIntPair>();
+                chunksNeeded.add(new ChunkCoordIntPair(ix >> 4, iz >> 4));
+                mediator.onChunkQueueRequest(chunksNeeded);
+                sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
         int id = worldObj.getBlockId(ix, iy, iz);
         if (id != 0 && Block.blocksList[id] != null) {
             return Block.blocksList[id].getBlocksMovement(worldObj, ix, iy, iz);
@@ -72,11 +84,11 @@ public class MinecartPathWorker extends Thread {
         if (result == null) {
             //System.out.println(getClass()+" finished. No path.");
             System.out.println("Total time in Seconds: " + time / 1000000000D);
-            boss.onNoPathAvailable();
+            mediator.onNoPathAvailable();
         } else {
             //System.out.println(getClass()+" finished. Path Length: "+result.size());
             System.out.println("Total time in Seconds: " + time / 1000000000D);
-            boss.onFoundPath(this, result);
+            mediator.onFoundPath(this, result);
         }
     }
 
@@ -96,7 +108,6 @@ public class MinecartPathWorker extends Thread {
 
     }
 
-
     public ArrayList<AStarNode> getPath(AStarNode start, AStarNode end) {
         setBounds(start.x, start.y, start.z, end.x, end.y, end.z, 12);
 
@@ -104,97 +115,97 @@ public class MinecartPathWorker extends Thread {
         startNode = start;
         targetNode = end;
 
-        if (!isViable(end.x, end.y, end.z)) {
-            return null;
+        while (!isViable(end.x, end.y, end.z)) {
+            end = new AStarNode(end.x, end.y + 1, end.z, null);
         }
 
-        // planar restrictions: if the start node has one unobstructed column
-        // connecting it to a plane on the final node, then we can start on the
-        // final node's plane
 
-        // TODO: only works on NE for some reason? blocks pathfinding in tight
-        // cases otherwise for some reason.
+//        boolean openColumn = false;
+//
+//        int x, y, z;
+//
+//        // UN Plane
+//        if (openColumn == false) {
+//            openColumn = true;
+//
+//            y = start.y;
+//            z = start.z;
+//            for (x = Math.min(start.x, end.x) + 1; x <= Math
+//                    .max(start.x, end.x); x++) {
+//                if (!isViable(x, y, z)) {
+//                    openColumn = false;
+//                    break;
+//                }
+//            }
+//            if (openColumn) {
+//                start = new AStarNode(end.x, y, z, startNode, end);
+//                plane = Direction.UN;
+//            }
+//        }
+//        // UE Plane
+//        if (openColumn == false) {
+//            openColumn = true;
+//
+//            x = start.x;
+//            y = start.y;
+//            for (z = Math.min(start.z, end.z) + 1; z <= Math
+//                    .max(start.z, end.z); z++) {
+//                if (!isViable(x, y, z)) {
+//                    openColumn = false;
+//                    break;
+//                }
+//            }
+//            if (openColumn) {
+//                start = new AStarNode(x, y, end.z, startNode, end);
+//                plane = Direction.UE;
+//            }
+//        }
+//
+//        // NE Plane
+//        if (openColumn == false) {
+//            openColumn = true;
+//
+//            x = start.x;
+//            z = start.z;
+//            for (y = Math.min(start.y, end.y) + 1; y <= Math
+//                    .max(start.y, end.y); y++) {
+//                if (!isViable(x, y, z)) {
+//                    openColumn = false;
+//                    break;
+//                }
+//            }
+//            if (openColumn) {
+//                start = new AStarNode(x, end.y, z, startNode, end);
+//                plane = Direction.NE;
+//            }
+//        }
+//
+//        // end of planar pruning
 
-        boolean openColumn = false;
-
-        int x, y, z;
-
-        // UN Plane
-        if (openColumn == false) {
-            openColumn = true;
-
-            y = start.y;
-            z = start.z;
-            for (x = Math.min(start.x, end.x) + 1; x <= Math
-                    .max(start.x, end.x); x++) {
-                if (!isViable(x, y, z)) {
-                    openColumn = false;
-                    break;
-                }
-            }
-            if (openColumn) {
-                start = new AStarNode(end.x, y, z, startNode, end);
-                plane = Direction.UN;
-            }
-        }
-        // UE Plane
-        if (openColumn == false) {
-            openColumn = true;
-
-            x = start.x;
-            y = start.y;
-            for (z = Math.min(start.z, end.z) + 1; z <= Math
-                    .max(start.z, end.z); z++) {
-                if (!isViable(x, y, z)) {
-                    openColumn = false;
-                    break;
-                }
-            }
-            if (openColumn) {
-                start = new AStarNode(x, y, end.z, startNode, end);
-                plane = Direction.UE;
-            }
-        }
-
-        // NE Plane
-        if (openColumn == false) {
-            openColumn = true;
-
-            x = start.x;
-            z = start.z;
-            for (y = Math.min(start.y, end.y) + 1; y <= Math
-                    .max(start.y, end.y); y++) {
-                if (!isViable(x, y, z)) {
-                    openColumn = false;
-                    break;
-                }
-            }
-            if (openColumn) {
-                start = new AStarNode(x, end.y, z, startNode, end);
-                plane = Direction.NE;
-            }
-        }
-
-        // end of planar pruning
-
-        ArrayList<Direction> neighbours = dumbNeighbourDirections();
+        ArrayList<Direction> neighbours = neighboursOnAPlane();
         boolean found = false;
         if (!found) {
             if (isViable(start.x, start.y, start.z)) {
                 found = true;
             } else {
                 for (Direction dir : neighbours) {
-                    if (isViableFrom(start.x + dir.x * resolution, start.y
+                    if (dir.y == 0 && isViableFrom(start.x + dir.x * resolution, start.y
                             + dir.y * resolution, start.z + dir.z * resolution,
                             dir)) {
                         found = true;
+                        start = new AStarNode(start.x + dir.x * resolution,
+                                start.y + dir.y * resolution, start.z + dir.z
+                                * resolution, startNode, targetNode);
                         break;
                     }
                 }
             }
+/*
             if (!found) {
+                System.out.println("Failed after " + checks);
                 return null;
             }
+*/
         }
 
         ArrayList<Direction> successors = dumbNeighbourDirections();
@@ -230,7 +241,7 @@ public class MinecartPathWorker extends Thread {
             }
         }
 
-        if (plane != Direction.UNE) {
+/*        if (plane != Direction.UNE) {
             // plane restricted failure. try again with plane restrictions.
 
             System.out.println("Failed after " + checks);
@@ -278,13 +289,13 @@ public class MinecartPathWorker extends Thread {
             }
         }
 
-        System.out.println("Failed after " + checks);
+        System.out.println("Failed after " + checks);*/
 
         return null;
     }
 
     protected boolean shouldInterrupt() {
-        if (this.boss == null) {
+        if (this.mediator == null) {
             return false;
         }
         return System.currentTimeMillis() > timeLimit;
@@ -372,18 +383,9 @@ public class MinecartPathWorker extends Thread {
             return null;
         }
 
-        // if (directionOfProbe.weight == Weight.D2
-        // && directionOfProbe.y == 0) {
-        // if (!isViable(parentX + directionOfProbe.x * resolution,
-        // parentY, parentZ)
-        // || !isViable(parentX, parentY, parentZ
-        // + directionOfProbe.z * resolution)) {
-        // return null;
-        // }
-        // }
-
         int dist = AStarStatic.getDistanceBetween(parentX, parentY, parentZ,
                 probeX, probeY, probeZ);
+        int distToEnd = AStarStatic.getDistanceBetween(probeX, probeY, probeZ, targetNode.x, targetNode.y, targetNode.z);
 
         ArrayList<Direction> neighbours = smartNeighbourDirections(probeX,
                 probeY, probeZ, directionOfProbe);
@@ -395,10 +397,8 @@ public class MinecartPathWorker extends Thread {
         // if this node has forced neighbours, extends beyond the designated
         // branch size, or is the target node, then return this node.
 
-        if ((dist > MAX_SKIP_DISTANCE)
-                // || (aabbTarget.intersectsWith(aabbNode))
-                // || (targetNode.x == probeX && targetNode.z == probeZ &&
-                // targetNode.y == probeY)
+        if (true || distToEnd > AStarStatic.getDistanceBetween(0, 0, 0, 64, 64, 64) || dist > MAX_SKIP_DISTANCE // setting this to 0 effectively turns the algorithm into A* "Every point is a jump point"
+                || (targetNode.x == probeX && targetNode.z == probeZ && targetNode.y == probeY)
                 || (targetNode.x / resolution == probeX / resolution
                 && targetNode.z / resolution == probeZ / resolution && targetNode.y
                 / resolution == probeY / resolution)
@@ -501,7 +501,7 @@ public class MinecartPathWorker extends Thread {
                             * plane.z == k)) {
                         Direction dir = Direction.getDirection(i, j, k);
                         // temporary limiter on directions that are tricky to rebuild.
-                        if (dir != Direction.U && dir != Direction.D && dir.weight != Weight.D3) {
+                        if (dir != Direction.U && dir != Direction.D /*&& dir.weight != Weight.D3*/) {
                             neighbours.add(dir);
                         }
                     }
@@ -843,16 +843,18 @@ public class MinecartPathWorker extends Thread {
             return false;
         }
 
-        for (int i = 0; i < w; i++) {
-            for (int j = 0; j < h; j++) {
-                for (int k = 0; k < w; k++) {
+        for (int i = -1; i < w - 1; i++) {
+            for (int k = -1; k < w - 1; k++) {
+                for (int j = 0; j < h; j++) {
+                    if (j == 1 && (i != 0 || k != 0)) {
+                        continue;
+                    }
                     if (!isPassableBlock(worldObj, tx + i, ty + j, tz + k)) {
                         return false;
                     }
                 }
             }
         }
-
         return true;
     }
 
@@ -982,17 +984,212 @@ public class MinecartPathWorker extends Thread {
                 maxX, maxY, maxZ);
     }
 
+/*
+    private Direction supplementaryDirection(AStarNode currNode, AStarNode lastSupplementaryNode, AStarNode lastRealNode, ArrayList<AStarNode> path) {
+        Direction currentDir = lastRealNode.getDirectionTo(currNode);
+        Direction lastSupplementaryDir = lastRealNode.getDirectionTo(lastSupplementaryNode);
+        Direction dir = null;
+        int product;
+
+        switch (currentDir.weight) {
+            case D1:
+//                if (lastSupplementaryDir.y == 1) {
+//                    AStarNode replacement = path.remove(path.size() - 1);
+//                    replacement = new AStarNode(replacement.x, replacement.y + 1, replacement.z, null);
+//                    dir = currNode.getDirectionTo(replacement);
+//                }
+                break;
+            case D2:
+
+                switch (lastSupplementaryDir.weight) {
+                    // if the last supplementary node is on the same level as the node, then use the same direction. otherwise, use the opposite direction.
+                    case D1:
+                        dir = (Direction.getDirection(lastSupplementaryDir.x, 0, lastSupplementaryDir.z));
+                        break;
+                    case D2:
+                        product = currentDir.x * currentDir.z;
+
+                        dir = (Direction.getDirection(lastSupplementaryDir.z * product, 0, lastSupplementaryDir.x * product));
+                        break;
+                }
+
+                break;
+            case D3:
+                */
+
+    /**
+     * To make alternating supplementary nodes, take the product of the x and z direction (will either be 1 or -1),
+     * then swap the x and z coordinates of the previous supplementary node direction, and finally multiply those coordinates by the product.
+     *//*
+
+
+                product = currentDir.x * currentDir.z;
+
+                dir = (Direction.getDirection(lastSupplementaryDir.z * product, currentDir.y != -1 ? 0 : 1, lastSupplementaryDir.x * product));
+
+                break;
+        }
+*/
+    private Direction supplementaryDirection(AStarNode lastRealNode, AStarNode lastSupplementaryNode, AStarNode currNode, AStarNode nextNode) {
+
+        Direction lastDir = lastRealNode.getDirectionTo(currNode);
+        Direction currDir = currNode.getDirectionTo(nextNode);
+        Direction lastSupplementaryDir = lastRealNode.getDirectionTo(lastSupplementaryNode);
+
+        if (Direction.getDirection(lastSupplementaryDir.x, 0, lastSupplementaryDir.z) == lastDir) {
+            return null;
+        }
+
+        Direction dir = null;
+        int product;
+
+        switch (lastDir.weight) {
+            case D1:
+//                if (lastSupplementaryDir.y == 1) {
+//                    AStarNode replacement = lastRealNode;
+//                    replacement = new AStarNode(replacement.x, replacement.y + 1, replacement.z, null);
+//                    dir = currNode.getDirectionTo(replacement);
+//                }
+                break;
+            case D2:
+                switch (lastSupplementaryDir.weight) {
+                    // if the last supplementary node is on the same level as the node, then use the same direction. otherwise, use the opposite direction.
+                    case D1:
+                        dir = (Direction.getDirection(lastSupplementaryDir.x, 0, lastSupplementaryDir.z));
+                        break;
+                    case D2:
+                        product = lastDir.x * lastDir.z;
+
+                        dir = (Direction.getDirection(lastSupplementaryDir.z * product, 0, lastSupplementaryDir.x * product));
+                        break;
+                }
+                if (currDir.weight == Weight.D1) {
+                    currNode = new AStarNode(currNode.x, currNode.y + 1, currNode.z, null);
+                }
+                break;
+            case D3:
+                /**
+                 * To make alternating supplementary nodes, take the product of the x and z direction (will either be 1 or -1),
+                 * then swap the x and z coordinates of the previous supplementary node direction, and finally multiply those coordinates by the product.
+                 */
+
+                product = lastDir.x * lastDir.z;
+
+                dir = (Direction.getDirection(lastSupplementaryDir.z * product, lastDir.y != -1 ? 0 : 1, lastSupplementaryDir.x * product));
+
+                if (currDir.weight == Weight.D1) {
+                    currNode = new AStarNode(currNode.x, currNode.y + 1, currNode.z, null);
+                }
+
+                break;
+        }
+
+
+        return dir;
+    }
+
+    /**
+     * New plan: backtrace will return a simple backtraced path. after that, it will be processed for supplementary nodes.
+     */
+
+    private ArrayList<AStarNode> convertToRailPath(ArrayList<AStarNode> backTracedPath) {
+        ArrayList<AStarNode> path = new ArrayList<AStarNode>();
+
+        Direction supplementaryDirection = null;
+
+        // TODO: add in supplementary nodes?
+        AStarNode lastRealNode = backTracedPath.get(0);
+        AStarNode currNode = backTracedPath.get(1);
+        AStarNode nextRealNode = backTracedPath.get(2);
+        AStarNode lastSupplementaryNode = lastRealNode;
+
+        // if dirTo lastReaNode == dirTo lastSupplementaryNode (with y=0), then we probably don't need a supplementary node.
+
+        for (int i = 1; i <= backTracedPath.size(); i++) {
+
+            Direction lastDir = lastRealNode.getDirectionTo(currNode);
+            Direction currDir = currNode.getDirectionTo(nextRealNode);
+            Direction lastSupplementaryDir = lastRealNode.getDirectionTo(lastSupplementaryNode);
+            if (lastDir.getOppositeDirection() == lastSupplementaryDir && lastDir.weight != Weight.D1) {
+                lastSupplementaryDir = Direction.getDirection(lastSupplementaryDir.x, 0, 0);
+            }
+
+            if (Direction.getDirection(lastSupplementaryDir.x, 0, lastSupplementaryDir.z) == lastDir) {
+                return null;
+            }
+
+            Direction dir = null;
+            int product;
+
+            switch (lastDir.weight) {
+                case D2:
+                    if (lastDir.y == 0) {
+                        switch (lastSupplementaryDir.weight) {
+                            // if the last supplementary node is on the same level as the node, then use the same direction. otherwise, use the opposite direction.
+                            case D1:
+                                dir = (Direction.getDirection(lastSupplementaryDir.x, 0, lastSupplementaryDir.z));
+                                break;
+                            case D2:
+                                product = lastDir.x * lastDir.z;
+
+                                dir = (Direction.getDirection(lastSupplementaryDir.z * product, 0, lastSupplementaryDir.x * product));
+                                break;
+                        }
+                    }
+//                    if (currDir.weight == Weight.D1 && lastDir.y == -1 && Direction.getDirection(lastDir.x, 0, lastDir.z) != currDir) {
+//                        currNode = new AStarNode(currNode.x, currNode.y + 1, currNode.z, null);
+//                    }
+                    break;
+                case D3:
+                    /**
+                     * To make alternating supplementary nodes, take the product of the x and z direction (will either be 1 or -1),
+                     * then swap the x and z coordinates of the previous supplementary node direction, and finally multiply those coordinates by the product.
+                     */
+
+                    product = lastDir.x * lastDir.z;
+
+                    dir = (Direction.getDirection(lastSupplementaryDir.z * product, lastDir.y != -1 ? 0 : 1, lastSupplementaryDir.x * product));
+
+                    if (currDir.weight == Weight.D1 && lastDir.y == -1 && Direction.getDirection(dir.x, 0, dir.z) != currDir) {
+                        currNode = new AStarNode(currNode.x, currNode.y + 1, currNode.z, null);
+                        dir = Direction.getDirection(dir.x, dir.y - 1, dir.z);
+                    }
+
+                    break;
+            }
+
+//            supplementaryDirection = supplementaryDirection(lastRealNode, lastSupplementaryNode, currNode, nextRealNode);
+
+            supplementaryDirection = dir;
+
+            if (supplementaryDirection != null) {
+                lastSupplementaryNode = new AStarNode(currNode.x + supplementaryDirection.x, currNode.y + supplementaryDirection.y, currNode.z + supplementaryDirection.z, null);
+                path.add(lastSupplementaryNode);
+            } else {
+                lastSupplementaryNode = lastRealNode;
+            }
+
+            path.add(currNode);
+
+            lastRealNode = currNode;
+            currNode = nextRealNode;
+            nextRealNode = backTracedPath.get(Math.min(i + 1, backTracedPath.size() - 1));
+        }
+        // TODO
+//        path.add(currNode);
+
+        return path;
+    }
+
     /**
      * Traces the path back to our starting Node, interpolating new Nodes
-     * inbetween the Jump Poins as we go.
+     * inbetween the Jump Points as we go.
      *
      * @param start Node we start to trace back from, should be target Node
      * @return list of adjacent AStarNodes from target to start Nodes
      */
-    private ArrayList<AStarNode> backTrace(AStarNode start) {
-        // System.out.println("Tracing...");
-        // int loops = 0;
 
+    private ArrayList<AStarNode> backTrace(AStarNode start) {
         ArrayList<AStarNode> foundpath = new ArrayList<AStarNode>();
         foundpath.add(currentNode);
 
@@ -1002,16 +1199,10 @@ public class MinecartPathWorker extends Thread {
         int px;
         int py;
         int pz;
-        int tx;
-        int ty;
-        int tz;
+
         Direction dir;
 
         while (!currentNode.equals(start)) {
-            // if(loops > 100000){
-            // System.out.println("Something is wrong.");
-            // }
-            // loops++;
 
             x = currentNode.x;
             y = currentNode.y;
@@ -1038,136 +1229,11 @@ public class MinecartPathWorker extends Thread {
 
             // add interpolated nodes
             while (x != px || y != py || z != pz) {
-                // loops++;
-
-                // fix diagonal collisions in path so they walk around
-                // corners.
-
-                if (isDiagonalBlockedFrom(x, y, z, dir) || dir.y == 0) {
-                    tx = x;
-                    ty = y;
-                    tz = z;
-
-                    if (dir.weight != Weight.D1) {
-
-                        tx -= dir.x * resolution;
-                        ty -= dir.y * resolution;
-                        tz -= dir.z * resolution;
-
-                        boolean hasOpening = false;
-
-                        for (Direction d : naturalNeighboursTowards(dir)) {
-                            // loops++;
-
-                            if (d.weight == Weight.D1
-                                    && d != dir
-                                    && isViable(tx + d.x * resolution, ty + d.y
-                                    * resolution, tz + d.z * resolution)) {
-                                if (dir.weight != Weight.D3) {
-                                    hasOpening = true;
-
-                                    foundpath.add(new AStarNode(tx + d.x
-                                            * resolution,
-                                            ty + d.y * resolution, tz + d.z
-                                            * resolution, null));
-                                } else {
-                                    for (Direction d2 : naturalNeighboursTowards(dir)) {
-                                        // loops++;
-
-                                        if (d2.weight == Weight.D2
-                                                && (d2.x == d.x || d2.y == d.y || d2.z == d.z)
-                                                && isViable(tx + d2.x
-                                                * resolution, ty + d2.y
-                                                * resolution, tz + d2.z
-                                                * resolution)) {
-                                            hasOpening = true;
-
-                                            foundpath.add(new AStarNode(tx
-                                                    + d.x * resolution, ty
-                                                    + d.y * resolution, tz
-                                                    + d.z * resolution, null));
-
-                                            foundpath.add(new AStarNode(tx
-                                                    + d2.x * resolution, ty
-                                                    + d2.y * resolution, tz
-                                                    + d2.z * resolution, null));
-
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (hasOpening)
-                                break;
-                        }
-                    }
-                }
 
                 foundpath.add(new AStarNode(x, y, z, null));
                 x += dir.x * resolution;
                 y += dir.y * resolution;
                 z += dir.z * resolution;
-            }
-
-            // fix diagonal collisions in path so they walk around corners.
-            if (isDiagonalBlockedFrom(x, y, z, dir) || dir.y == 0) {
-                tx = x;
-                ty = y;
-                tz = z;
-
-                if (dir.weight != Weight.D1) {
-
-                    tx -= dir.x * resolution;
-                    ty -= dir.y * resolution;
-                    tz -= dir.z * resolution;
-
-                    boolean hasOpening = false;
-
-                    for (Direction d : naturalNeighboursTowards(dir)) {
-                        // loops++;
-
-                        if (d.weight == Weight.D1
-                                && d != dir
-                                && isViable(tx + d.x * resolution, ty + d.y
-                                * resolution, tz + d.z * resolution)) {
-                            if (dir.weight != Weight.D3) {
-                                hasOpening = true;
-
-                                foundpath.add(new AStarNode(tx + d.x
-                                        * resolution, ty + d.y * resolution, tz
-                                        + d.z * resolution, null));
-                            } else {
-                                for (Direction d2 : naturalNeighboursTowards(dir)) {
-                                    // loops++;
-
-                                    if (d2.weight == Weight.D2
-                                            && (d2.x == d.x || d2.y == d.y || d2.z == d.z)
-                                            && isViable(tx + d2.x * resolution,
-                                            ty + d2.y * resolution, tz
-                                            + d2.z * resolution)) {
-                                        hasOpening = true;
-
-                                        foundpath.add(new AStarNode(tx + d.x
-                                                * resolution, ty + d.y
-                                                * resolution, tz + d.z
-                                                * resolution, null));
-
-                                        foundpath.add(new AStarNode(tx + d2.x
-                                                * resolution, ty + d2.y
-                                                * resolution, tz + d2.z
-                                                * resolution, null));
-
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (hasOpening)
-                            break;
-
-                    }
-                }
             }
 
             foundpath.add(currentNode.parent);
@@ -1177,7 +1243,7 @@ public class MinecartPathWorker extends Thread {
         // System.out.println("Done tracing. Nodes: " + foundpath.size() +
         // "; Loops: " + loops);
 
-        return foundpath;
+        return convertToRailPath(foundpath);
     }
 
     private ArrayList<AStarNode> backTraceSingles(AStarNode start) {

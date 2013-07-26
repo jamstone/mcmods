@@ -14,13 +14,13 @@ public class ModelWilloWisp extends ModelBase {
         textureHeight = 32;
 
         Criss = new ModelRenderer(this, 0, 0);
-        Criss.addBox(-4F, -4F, 0F, 8, 8, 0);
+        Criss.addBox(-4F, -8F, 0F, 8, 8, 0);
         Criss.setRotationPoint(0F, 0F, 0F);
         Criss.setTextureSize(32, 32);
         Criss.mirror = true;
         setRotation(Criss, 0F, 0F, 0F);
         Cross = new ModelRenderer(this, 0, 0);
-        Cross.addBox(0F, -4F, -4F, 0, 8, 8);
+        Cross.addBox(0F, -8F, -4F, 0, 8, 8);
         Cross.setRotationPoint(0F, 0F, 0F);
         Cross.setTextureSize(32, 32);
         Cross.mirror = true;

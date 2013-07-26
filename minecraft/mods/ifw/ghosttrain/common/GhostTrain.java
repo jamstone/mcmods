@@ -15,13 +15,16 @@ import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.world.World;
 import net.minecraftforge.common.Configuration;
+import net.minecraftforge.common.ForgeChunkManager;
 
 import java.util.EnumSet;
+import java.util.List;
 
 @Mod(modid = GhostTrain.modid, name = "GhostTrain", version = "0.1a")
 @NetworkMod(clientSideRequired = true, serverSideRequired = false)
-public class GhostTrain implements ITickHandler {
+public class GhostTrain implements ITickHandler, ForgeChunkManager.LoadingCallback {
     public static final String modid = "ifw_ghosttrain";
     public static GhostTrain instance;
     public static Configuration config;
@@ -38,6 +41,8 @@ public class GhostTrain implements ITickHandler {
     public static Block blockBrightSpace;
     public int brightID;
 
+    public static Block blockPhantomPower;
+    public int phantomID;
 
     public int addConfigBlock(Configuration config, String name) {
         return config.getBlock(name, ++lastBlockID).getInt();
@@ -52,6 +57,7 @@ public class GhostTrain implements ITickHandler {
 
         stationID = addConfigBlock(config, "Station");
         brightID = addConfigBlock(config, "Bright Space");
+        phantomID = addConfigBlock(config, "Phantom Power");
 
         config.save();
     }
@@ -90,6 +96,11 @@ public class GhostTrain implements ITickHandler {
         LanguageRegistry.addName(blockBrightSpace, "Bright Space");
         GameRegistry.registerBlock(blockBrightSpace, blockBrightSpace.getUnlocalizedName2());
 
+        blockPhantomPower = new BlockPhantomPower(phantomID).setUnlocalizedName(modid
+                + "blockPhantomPower");
+        LanguageRegistry.addName(blockPhantomPower, "Phantom Power");
+        GameRegistry.registerBlock(blockPhantomPower, blockPhantomPower.getUnlocalizedName2());
+
     }
 
     public void registerEntities() {
@@ -107,6 +118,7 @@ public class GhostTrain implements ITickHandler {
     }
 
     public void registerEtc() {
+        ForgeChunkManager.setForcedChunkLoadingCallback(instance, instance);
     }
 
     @PostInit
@@ -131,4 +143,10 @@ public class GhostTrain implements ITickHandler {
         return null;
     }
 
+    @Override
+    public void ticketsLoaded(List<ForgeChunkManager.Ticket> tickets, World world) {
+        for (ForgeChunkManager.Ticket t : tickets) {
+            ForgeChunkManager.releaseTicket(t);
+        }
+    }
 }

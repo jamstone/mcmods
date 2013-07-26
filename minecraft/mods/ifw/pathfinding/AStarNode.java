@@ -28,11 +28,10 @@ public class AStarNode implements Comparable<AStarNode>, Cloneable {
     /**
      * AStarNode constructor
      *
-     * @param ix   x coordinate
-     * @param iy   y coordinate
-     * @param iz   z coordinate
-     * @param dist Node reaching distance from start
-     * @param p    parent Node
+     * @param ix x coordinate
+     * @param iy y coordinate
+     * @param iz z coordinate
+     * @param p  parent Node
      */
     public AStarNode(int ix, int iy, int iz, AStarNode p) {
         x = ix;
@@ -56,15 +55,13 @@ public class AStarNode implements Comparable<AStarNode>, Cloneable {
     }
 
     public int getF() {
-        return g_distanceFromStart * 1 + h_distanceToGoal * 1;
+        return g_distanceFromStart * 100 + h_distanceToGoal * 101;
     }
 
     /**
      * Tries to update this Node instance with a new Nodechain to it, but checks
      * if that improves the Node cost first
      *
-     * @param newDistanceFromStart new G distance if the update is accepted
-     * @param newParentNode        new parent Node if the update is accepted
      * @return true if the new cost is lower and the update was accepted, false
      *         otherwise
      */

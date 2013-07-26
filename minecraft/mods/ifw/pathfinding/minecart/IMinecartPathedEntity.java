@@ -1,6 +1,7 @@
 package mods.ifw.pathfinding.minecart;
 
 import mods.ifw.pathfinding.AStarNode;
+import net.minecraft.world.ChunkCoordIntPair;
 
 import java.util.ArrayList;
 
@@ -13,6 +14,7 @@ import java.util.ArrayList;
  */
 
 public interface IMinecartPathedEntity {
+
     /**
      * Returned by a Pathfinding worker that found a solution for the
      * provided Start and End Nodes. Solution is provided as list of
@@ -28,4 +30,7 @@ public interface IMinecartPathedEntity {
      * to check or hit it's maximum searching time limit.
      */
     public void onNoPathAvailable();
+
+    public void onChunkQueueRequest(ArrayList<ChunkCoordIntPair> chunkCoordIntPairs);
+
 }

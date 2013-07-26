@@ -1,7 +1,7 @@
 package mods.ifw.aurus.common;
 
 import mods.ifw.pathfinding.AStarNode;
-import mods.ifw.pathfinding.minecart.MinecartPathWorker;
+import mods.ifw.pathfinding.minecart.MinecartPathThread;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
@@ -43,14 +43,14 @@ public class BlockPathFinder extends Block {
 
         // nearest biome
 
-        BiomeGenBase targetBiome = BiomeGenBase.mushroomIsland;
+        BiomeGenBase targetBiome = BiomeGenBase.ocean;
         ChunkPosition cpos = null;
 
         int startX = par2;
         int startZ = par4;
 
         int chunkRadius = 1;
-        int maxRange = 640;
+        int maxRange = 64;
 
         while (chunkRadius < maxRange) {
             for (int i = -chunkRadius; i < chunkRadius && chunkRadius < maxRange; i++) {
@@ -92,7 +92,7 @@ public class BlockPathFinder extends Block {
 //
 //        aswJP3D.setup(par1World, start, goal, null);
 
-        MinecartPathWorker mcpp = new MinecartPathWorker(null);
+        MinecartPathThread mcpp = new MinecartPathThread(null);
         mcpp.setup(par1World, start, goal, null);
 
         ArrayList<AStarNode> path = mcpp.getPath(start, goal);

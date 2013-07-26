@@ -137,8 +137,8 @@ public class AStarStatic {
         // return Math.abs(x1 - x2) + Math.abs(y1 - y2) + Math.abs(z1 - z2);
 
         // Euclidean
-        // return (int) Math.floor((Math.sqrt(Math.pow((x1 - x2), 2)
-        // + Math.pow((y1 - y2), 2) + Math.pow((z1 - z2), 2)) * 10));
+//        return (int) Math.floor((Math.sqrt(Math.pow((x1 - x2), 2)
+//                + Math.pow((y1 - y2), 2) + Math.pow((z1 - z2), 2)) * 10));
 
         // Chebyshev ???
         int D1 = 10;
