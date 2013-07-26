@@ -26,10 +26,10 @@ public class BlockStation extends Block implements ITileEntityProvider {
     @SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister) {
         icons = new Icon[4];
-        icons[0b00] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0bot");
-        icons[0b01] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0top");
-        icons[0b10] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1bot");
-        icons[0b11] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1top");
+        icons[0] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0bot");
+        icons[1] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation0top");
+        icons[2] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1bot");
+        icons[3] = par1IconRegister.registerIcon(GhostTrain.modid + ":blockStation1top");
     }
 
     @SideOnly(Side.CLIENT)
@@ -113,7 +113,7 @@ public class BlockStation extends Block implements ITileEntityProvider {
 
     @Override
     public TileEntity createTileEntity(World world, int metadata) {
-        if (world.isRemote || (metadata & 0b01) == 0b01) {
+        if (world.isRemote || (metadata & 1) == 1) {
             return null;
         } else {
             return createNewTileEntity(world);
@@ -123,7 +123,7 @@ public class BlockStation extends Block implements ITileEntityProvider {
     public TileEntity getTileEntity(World world, int x, int y, int z) {
         int metadata = world.getBlockMetadata(x, y, z);
         TileEntityStation te = null;
-        if ((metadata & 0b01) == 0b01) {
+        if ((metadata & 1) == 1) {
             te = (TileEntityStation) world.getBlockTileEntity(x, y - 1, z);
         } else {
             te = (TileEntityStation) world.getBlockTileEntity(x, y, z);

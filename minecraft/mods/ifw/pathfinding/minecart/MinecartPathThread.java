@@ -4,7 +4,6 @@ import mods.ifw.pathfinding.AStarNode;
 import mods.ifw.pathfinding.AStarStatic;
 import mods.ifw.pathfinding.Direction;
 import mods.ifw.pathfinding.Weight;
-import net.minecraft.block.Block;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.ChunkCoordIntPair;
 import net.minecraft.world.World;
@@ -60,18 +59,18 @@ public class MinecartPathThread extends Thread {
                 ArrayList<ChunkCoordIntPair> chunksNeeded = new ArrayList<ChunkCoordIntPair>();
                 chunksNeeded.add(new ChunkCoordIntPair(ix >> 4, iz >> 4));
                 mediator.onChunkQueueRequest(chunksNeeded);
-                sleep(10);
+                sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return false;
             }
         }
-        int id = worldObj.getBlockId(ix, iy, iz);
-        if (id != 0 && Block.blocksList[id] != null) {
-            return Block.blocksList[id].getBlocksMovement(worldObj, ix, iy, iz);
-        }
+//        int id = worldObj.getBlockId(ix, iy, iz);
+//        if (id != 0 && Block.blocksList[id] != null) {
+//            return Block.blocksList[id].getBlocksMovement(worldObj, ix, iy, iz);
+//        }
 
-        return true;
+        return worldObj.isAirBlock(ix, iy, iz);
     }
 
     public void run() {
@@ -189,7 +188,7 @@ public class MinecartPathThread extends Thread {
                 found = true;
             } else {
                 for (Direction dir : neighbours) {
-                    if (dir.y == 0 && isViableFrom(start.x + dir.x * resolution, start.y
+                    if (dir.y == 0 && dir.weight == Weight.D1 && isViableFrom(start.x + dir.x * resolution, start.y
                             + dir.y * resolution, start.z + dir.z * resolution,
                             dir)) {
                         found = true;

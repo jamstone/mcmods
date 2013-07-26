@@ -1,6 +1,7 @@
 package mods.ifw.ghosttrain.common;
 
 import mods.ifw.pathfinding.AStarNode;
+import mods.ifw.pathfinding.AStarStatic;
 import mods.ifw.pathfinding.minecart.IMinecartPathedEntity;
 import mods.ifw.pathfinding.minecart.MinecartPathMediator;
 import net.minecraft.entity.player.EntityPlayer;
@@ -102,7 +103,7 @@ public class TileEntityStation extends TileEntity implements IMinecartPathedEnti
 
                 foundPath = null;
 
-                worldObj.setBlockMetadataWithNotify(xCoord, yCoord + 1, zCoord, 0b11, 3);
+                worldObj.setBlockMetadataWithNotify(xCoord, yCoord + 1, zCoord, 3, 3);
             }
 
             if (!searching && bigTicket != null) {
@@ -115,7 +116,7 @@ public class TileEntityStation extends TileEntity implements IMinecartPathedEnti
                 chunkDelay = 0;
                 if (!surveyComplete) {
                     findBiomes();
-                    worldObj.setBlockMetadataWithNotify(xCoord, yCoord + 1, zCoord, 0b01, 3);
+                    worldObj.setBlockMetadataWithNotify(xCoord, yCoord + 1, zCoord, 1, 3);
                 } else {
                     findPaths();
                 }
@@ -143,8 +144,26 @@ public class TileEntityStation extends TileEntity implements IMinecartPathedEnti
 
     private void spawnPathGuide(ArrayList<AStarNode> path) {
         EntityWilloWisp ww = new EntityWilloWisp(worldObj);
-        ww.setPath(path);
-        ww.setPosition(path.get(path.size() - 5).x + 0.5, path.get(path.size() - 5).y + 2, path.get(path.size() - 5).z + 0.5);
+        ww.setPath(new ArrayList<AStarNode>(path));
+
+
+        AStarNode as = path.get(path.size() - 1);
+        AStarNode firstAs = as;
+        AStarNode lastAs = as;
+        while (as.getDistanceTo(firstAs) < AStarStatic.getDistanceBetween(0, 0, 0, 8, 8, 8)) {
+            path.remove(path.size() - 1);
+
+            lastAs = as;
+            if (path.size() < 1) {
+                path = null;
+                break;
+            }
+            as = path.get(path.size() - 1);
+        }
+        if (lastAs != null) {
+            ww.setPosition(lastAs.x + 0.5, lastAs.y + 2, lastAs.z + 0.5);
+        }
+
         worldObj.spawnEntityInWorld(ww);
     }
 
@@ -321,11 +340,9 @@ public class TileEntityStation extends TileEntity implements IMinecartPathedEnti
 
         ArrayList<AStarNode> path = pathsToClosestBiomes[pathIndex];
 
-        if (path.size() == 0) {
-            System.out.println("Fucked something up. Biome is " + BiomeGenBase.biomeList[pathIndex].biomeName);
-        } else {
-            spawnPathGuide(new ArrayList<AStarNode>(path));
-        }
+
+        spawnPathGuide(new ArrayList<AStarNode>(path));
+
     }
 
     public void findPathBETA(World par1World, int blockX, int blockY, int blockZ) {
